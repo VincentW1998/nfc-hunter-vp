@@ -161,7 +161,12 @@ export function AdminPanel({ user }: { user: any }) {
 
   const getScanUrl = (missionId: string) => {
     const url = new URL(window.location.href);
-    return `${url.protocol}//${url.host}/game/${gameId}/mission/${missionId}`;
+    return `${url.protocol}//${url.host}${url.pathname}#/game/${gameId}/mission/${missionId}`;
+  };
+
+  const getPlayerKillUrl = (playerId: string) => {
+    const url = new URL(window.location.href);
+    return `${url.protocol}//${url.host}${url.pathname}#/game/${gameId}/kill/${playerId}`;
   };
 
   const copyToClipboard = (text: string) => {
@@ -238,9 +243,9 @@ export function AdminPanel({ user }: { user: any }) {
                    <p className="font-bold text-zinc-200">{p.name}</p>
                    <div className="flex items-center gap-2 mt-1">
                      <p className="text-[10px] text-zinc-500 font-mono opacity-70 truncate w-full select-all">
-                       {`${window.location.origin}/game/${gameId}/kill/${p.id}`}
+                       {getPlayerKillUrl(p.id!)}
                      </p>
-                     <button onClick={() => copyToClipboard(`${window.location.origin}/game/${gameId}/kill/${p.id}`)} className="text-zinc-400 hover:text-blue-500 transition-colors p-1 cursor-pointer shrink-0">
+                     <button onClick={() => copyToClipboard(getPlayerKillUrl(p.id!))} className="text-zinc-400 hover:text-blue-500 transition-colors p-1 cursor-pointer shrink-0">
                        <Copy size={14} />
                      </button>
                    </div>
