@@ -1,0 +1,49 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    match /{document=**} {
+      allow read, write: if false;
+    }
+    
+    function isSignedIn() { return request.auth != null; }
+    function incoming() { return request.resource.data; }
+    function existing() { return resource.data; }
+    function isValidId(id) { return id is string && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$'); }
+
+    function isValidGame(data) {
+      return data.keys().hasAll(['status', 'ownerId', 'createdAt', 'updatedAt']) &&
+             data.status is string && data.status.size() <= 20 &&
+             data.ownerId is string && data.ownerId.size() <= 128 &&
+             data.createdAt is number &&
+             data.updatedAt is number;
+    }
+
+    function isValidPlayer(data) {
+      return data.keys().hasAll(['name', 'role', 'status', 'joinTime']) &&
+             data.name is string && data.name.size() <= 128 &&
+             data.role is string && data.role.size() <= 20 &&
+             data.status is string && data.status.size() <= 20 &&
+             data.joinTime is number;
+    }
+    
+    match /games/{gameId} {
+      allow get: if isSignedIn() && isValidId(gameId);
+      allow list: if isSignedIn();
+      
+      allow create: if isSignedIn();
+      allow update: if isSignedIn();
+      allow delete: if isSignedIn() && existing().ownerId == request.auth.uid;
+                    
+      match /players/{playerId} {
+        allow read: if isSignedIn(); // get and list
+        allow create: if isSignedIn();
+        allow update: if isSignedIn();
+      }
+      
+      match /missions/{missionId} {
+        allow read: if isSignedIn();
+        allow create, update, delete: if isSignedIn();
+      }
+    }
+  }
+}

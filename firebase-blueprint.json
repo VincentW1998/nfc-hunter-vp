@@ -1,0 +1,61 @@
+{
+  "entities": {
+    "Game": {
+      "title": "Game Lobby",
+      "description": "Represents a match lobby",
+      "type": "object",
+      "properties": {
+        "status": { "type": "string", "enum": ["lobby", "playing", "voting", "finished"] },
+        "ownerId": { "type": "string" },
+        "createdAt": { "type": "number" },
+        "updatedAt": { "type": "number" },
+        "killersCount": { "type": "number" },
+        "crewmatesScore": { "type": "number" },
+        "killersScore": { "type": "number" },
+        "votingEndTime": { "type": "number" },
+        "targetScore": { "type": "number" },
+        "winner": { "type": "string", "enum": ["crewmates", "killers", "none"] }
+      },
+      "required": ["status", "ownerId", "createdAt", "updatedAt"]
+    },
+    "Player": {
+      "title": "Player",
+      "description": "A participant in a game",
+      "type": "object",
+      "properties": {
+        "name": { "type": "string" },
+        "role": { "type": "string", "enum": ["crewmate", "killer", "unassigned"] },
+        "status": { "type": "string", "enum": ["alive", "dead", "eliminated"] },
+        "joinTime": { "type": "number" },
+        "completedTasks": { "type": "number" },
+        "votedFor": { "type": "string" }
+      },
+      "required": ["name", "role", "status", "joinTime"]
+    },
+    "Mission": {
+      "title": "Mission",
+      "description": "A specific mission/task setup in a game",
+      "type": "object",
+      "properties": {
+        "name": { "type": "string" },
+        "type": { "type": "string", "enum": ["code", "clicker"] },
+        "answer": { "type": "string" }
+      },
+      "required": ["name", "type"]
+    }
+  },
+  "firestore": {
+    "games/{gameId}": {
+      "schema": { "$ref": "#/entities/Game" },
+      "description": "The main game lobbies"
+    },
+    "games/{gameId}/players/{playerId}": {
+      "schema": { "$ref": "#/entities/Player" },
+      "description": "Players in the game, keyed by uid"
+    },
+    "games/{gameId}/missions/{missionId}": {
+      "schema": { "$ref": "#/entities/Mission" },
+      "description": "Configured missions"
+    }
+  }
+}
