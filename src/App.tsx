@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { BrowserRouter, Routes, Route, useNavigate, useParams, useSearchParams } from "react-router-dom";
+import { HashRouter as Router, Routes, Route, useNavigate, useParams, useSearchParams } from "react-router-dom";
 import { useEffect, useState } from "react";
 import { auth, db } from "./firebase";
 import { onAuthStateChanged, signInWithPopup, GoogleAuthProvider, signInAnonymously, updateProfile } from "firebase/auth";
@@ -102,7 +102,7 @@ export default function App() {
   }
 
   return (
-    <BrowserRouter>
+    <Router>
       <Toaster position="top-center" toastOptions={{ style: { background: '#18181b', color: '#fafafa', border: '1px solid #27272a' } }} />
       <Routes>
         <Route path="/" element={<Home user={user} />} />
@@ -113,6 +113,6 @@ export default function App() {
         <Route path="/game/:gameId/kill/:targetId" element={<KillView user={user} />} />
         <Route path="/game/:gameId/vote" element={<VotingView user={user} />} />
       </Routes>
-    </BrowserRouter>
+    </Router>
   );
 }
