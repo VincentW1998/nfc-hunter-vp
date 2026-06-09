@@ -26,12 +26,14 @@ export interface Player {
   joinTime: number;
   tasks?: PlayerTask[];
   votedFor?: string | null;
+  lastKillTime?: number;
 }
 
 export interface Mission {
   id?: string;
   name: string;
   type: MissionType;
+  passcode?: string;
 }
 
 export enum OperationType {

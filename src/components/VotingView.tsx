@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { doc, getDoc, onSnapshot, updateDoc, collection } from "firebase/firestore";
+import { doc, getDoc, onSnapshot, updateDoc, collection, writeBatch } from "firebase/firestore";
 import { db } from "../firebase";
 import { Game, Player, handleFirestoreError, OperationType } from "../types";
 import { toast } from "react-hot-toast";
@@ -31,6 +31,25 @@ export function VotingView({ user }: { user: any }) {
 
     return () => { unsubGame(); unsubAll(); }
   }, [gameId, user, navigate]);
+
+  const [timeLeft, setTimeLeft] = useState(60);
+
+  useEffect(() => {
+    if (game?.status !== "voting") return;
+    const timer = setInterval(() => {
+      setTimeLeft(prev => {
+        if (prev <= 1) {
+          clearInterval(timer);
+          if (game.ownerId === user.uid) {
+            endMeeting();
+          }
+          return 0;
+        }
+        return prev - 1;
+      });
+    }, 1000);
+    return () => clearInterval(timer);
+  }, [game?.status, game?.ownerId, user.uid]);
 
   const castVote = async (targetId: string) => {
     if (!gameId || !me || me.status !== "alive") return;
@@ -65,22 +84,24 @@ export function VotingView({ user }: { user: any }) {
     }
 
     try {
+      // Reset votes and go back to playing
+      const batch = writeBatch(db);
       if (eliminatedId) {
-        await updateDoc(doc(db, `games/${gameId}/players`, eliminatedId), {
+        batch.update(doc(db, `games/${gameId}/players`, eliminatedId), {
           status: "eliminated"
         });
         toast.error("A player was eliminated.");
       }
       
-      // Reset votes and go back to playing
-      players.forEach(async (p) => {
-         await updateDoc(doc(db, `games/${gameId}/players`, p.id!), { votedFor: "" });
+      players.forEach((p) => {
+         batch.update(doc(db, `games/${gameId}/players`, p.id!), { votedFor: "" });
       });
 
-      await updateDoc(doc(db, "games", gameId), {
+      batch.update(doc(db, "games", gameId), {
         status: "playing",
         updatedAt: Date.now()
       });
+      await batch.commit();
     } catch (err) {
       handleFirestoreError(err, OperationType.UPDATE, `games/${gameId}`);
     }
@@ -93,9 +114,12 @@ export function VotingView({ user }: { user: any }) {
       <div className="absolute inset-0 bg-[radial-gradient(circle_at_2px_2px,_#27272a_1px,_transparent_0)] bg-[length:24px_24px] opacity-30 pointer-events-none"></div>
 
       <h1 className="text-3xl text-red-500 font-bold tracking-widest mb-2 uppercase animate-pulse text-center relative z-10">EMERGENCY MEETING</h1>
-      <p className="text-red-400 font-bold tracking-widest text-lg mb-2 text-center uppercase relative z-10 border border-red-500/30 bg-red-500/10 py-2 px-4 rounded-full">
-        RENDEZ-VOUS AU CHECK POINT !
-      </p>
+      <div className="flex items-center justify-center gap-2 relative z-10 mb-2">
+         <span className="text-red-400 font-bold tracking-widest text-lg uppercase border border-red-500/30 bg-red-500/10 py-2 px-4 rounded-full">
+           RENDEZ-VOUS AU CHECK POINT !
+         </span>
+      </div>
+      <p className="text-red-500 font-bold text-2xl mb-8 relative z-10 font-mono">00:{timeLeft.toString().padStart(2, '0')}</p>
       <p className="text-zinc-400 mb-8 max-w-sm text-center relative z-10">Discuss and eliminate the threat.</p>
       
       <div className="w-full max-w-md bg-zinc-900 border border-zinc-800 rounded-[16px] p-4 shadow-2xl mb-8 relative z-10">

@@ -41,17 +41,35 @@ export function AdminPanel({ user }: { user: any }) {
     return () => { unsub(); unsubMissions(); unsubPlayers(); }
   }, [gameId, user, navigate]);
 
-  const addCodeMission = async () => {
+  const addClickerMission = async () => {
     const id = "M" + Math.random().toString(36).substring(2, 6).toUpperCase();
-    const name = newMissionName.trim() || `Task ${id}`;
+    const name = newMissionName.trim() || `Reactor ${id}`;
     const newMission: Mission = {
       name,
-      type: "code"
+      type: "clicker"
     };
     try {
       await setDoc(doc(db, `games/${gameId}/missions`, id), newMission);
       setNewMissionName("");
-      toast.success(`Task added. Scan NFC code mapped to ?tag=${id}`);
+      toast.success(`Clicker Task added. Link: ?tag=${id}`);
+    } catch (err) {
+      handleFirestoreError(err, OperationType.CREATE, `games/${gameId}/missions/${id}`);
+    }
+  };
+
+  const addCodeMission = async () => {
+    const id = "M" + Math.random().toString(36).substring(2, 6).toUpperCase();
+    const name = newMissionName.trim() || `Task ${id}`;
+    const passcode = Math.floor(1000 + Math.random() * 9000).toString();
+    const newMission: Mission = {
+      name,
+      type: "code",
+      passcode
+    };
+    try {
+      await setDoc(doc(db, `games/${gameId}/missions`, id), newMission);
+      setNewMissionName("");
+      toast.success(`Task added. Passcode: ${passcode}. Link: ?tag=${id}`);
     } catch (err) {
       handleFirestoreError(err, OperationType.CREATE, `games/${gameId}/missions/${id}`);
     }
@@ -199,7 +217,10 @@ export function AdminPanel({ user }: { user: any }) {
              {missions.map(m => (
                <div key={m.id} className="bg-zinc-950 p-4 rounded-xl flex items-center justify-between border border-zinc-800">
                  <div className="flex-1 min-w-0 pr-4">
-                   <p className="font-bold text-zinc-200">{m.name}</p>
+                   <p className="font-bold text-zinc-200">
+                     {m.name} 
+                     {m.passcode && <span className="ml-2 text-xs text-blue-500 bg-blue-500/10 px-2 py-0.5 rounded border border-blue-500/20">{m.passcode}</span>}
+                   </p>
                    <div className="flex items-center gap-2 mt-1">
                      <p className="text-xs text-zinc-500 font-mono opacity-70 truncate max-w-[200px] sm:max-w-md select-all">
                        {getScanUrl(m.id!)}
@@ -226,7 +247,10 @@ export function AdminPanel({ user }: { user: any }) {
              className="flex-1 bg-zinc-950 border border-zinc-800 text-zinc-200 text-sm font-bold tracking-wider rounded-xl px-4 py-3 focus:outline-none focus:border-blue-500 transition-colors"
            />
            <button onClick={addCodeMission} className="flex items-center justify-center gap-2 px-6 py-3 border border-blue-500/30 text-blue-500 bg-blue-500/10 hover:bg-blue-500/20 rounded-xl font-bold transition-colors cursor-pointer uppercase tracking-widest text-sm shrink-0">
-              <Plus size={18} /> GENERATE
+              <Plus size={18} /> CODE
+           </button>
+           <button onClick={addClickerMission} className="flex items-center justify-center gap-2 px-6 py-3 border border-orange-500/30 text-orange-500 bg-orange-500/10 hover:bg-orange-500/20 rounded-xl font-bold transition-colors cursor-pointer uppercase tracking-widest text-sm shrink-0">
+              <Plus size={18} /> CLICKER
            </button>
          </div>
       </div>

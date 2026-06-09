@@ -26,6 +26,14 @@ export function KillView({ user }: { user: any }) {
             return;
         }
 
+        const now = Date.now();
+        if (me.lastKillTime && now - me.lastKillTime < 60000) {
+            const left = Math.ceil((60000 - (now - me.lastKillTime)) / 1000);
+            toast.error(`Weapon cooling down. ${left}s remaining.`);
+            navigate(`/game/${gameId}`);
+            return;
+        }
+
         if (targetId === user.uid) {
             toast.error("You cannot eliminate yourself.");
             navigate(`/game/${gameId}`);
@@ -48,6 +56,7 @@ export function KillView({ user }: { user: any }) {
         }
 
         await updateDoc(targetRef, { status: "dead" });
+        await updateDoc(doc(db, `games/${gameId}/players`, user.uid), { lastKillTime: now });
         toast.success("Elimination successful. Flee the scene.");
         navigate(`/game/${gameId}`);
       } catch (err) {

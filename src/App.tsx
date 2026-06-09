@@ -3,6 +3,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+import { Navigate } from "react-router-dom";
 import { HashRouter as Router, Routes, Route, useNavigate, useParams, useSearchParams } from "react-router-dom";
 import { useEffect, useState } from "react";
 import { auth, db } from "./firebase";
@@ -112,6 +113,7 @@ export default function App() {
         <Route path="/game/:gameId/mission/:missionId" element={<MissionView user={user} />} />
         <Route path="/game/:gameId/kill/:targetId" element={<KillView user={user} />} />
         <Route path="/game/:gameId/vote" element={<VotingView user={user} />} />
+        <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
     </Router>
   );
