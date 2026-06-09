@@ -25,6 +25,7 @@ export interface Player {
   status: PlayerStatus;
   joinTime: number;
   tasks?: PlayerTask[];
+  votedFor?: string | null;
 }
 
 export interface Mission {
