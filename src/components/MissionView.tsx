@@ -34,8 +34,23 @@ export function MissionView({ user }: { user: any }) {
     fetchMission();
   }, [gameId, missionId, navigate]);
 
+  useEffect(() => {
+    if (!gameId) return;
+    import("firebase/firestore").then(({ onSnapshot, doc }) => {
+      const unsub = onSnapshot(doc(db, "games", gameId), (snap) => {
+        if (snap.exists()) {
+          const mgame = snap.data() as Game;
+          if (mgame.status === "meeting" || mgame.status === "voting") {
+             navigate(`/game/${gameId}/vote`);
+          }
+        }
+      });
+      return () => unsub();
+    });
+  }, [gameId, navigate]);
+
   const [clicks, setClicks] = useState(0);
-  const clickTarget = 50;
+  const clickTarget = mission?.clickTarget || 50;
 
   const submitCodeTask = async (e?: any) => {
     if (e) e.preventDefault();

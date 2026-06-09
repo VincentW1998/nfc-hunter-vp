@@ -12,6 +12,7 @@ export interface Game {
   createdAt: number;
   updatedAt: number;
   votingStartTime?: number;
+  lastEmergencyTime?: number;
 }
 
 export interface PlayerTask {
@@ -35,6 +36,7 @@ export interface Mission {
   name: string;
   type: MissionType;
   passcode?: string;
+  clickTarget?: number;
 }
 
 export enum OperationType {

@@ -4,7 +4,7 @@ import { doc, getDoc, updateDoc, collection, setDoc, deleteDoc, onSnapshot, getD
 import { db } from "../firebase";
 import { toast } from "react-hot-toast";
 import { Game, Mission, Player, handleFirestoreError, OperationType } from "../types";
-import { Settings, Plus, Play, Trash2, ArrowLeft, Copy } from "lucide-react";
+import { Settings, Plus, Play, Trash2, ArrowLeft, Copy, Edit2 } from "lucide-react";
 
 export function AdminPanel({ user }: { user: any }) {
   const { gameId } = useParams();
@@ -72,6 +72,30 @@ export function AdminPanel({ user }: { user: any }) {
       toast.success(`Task added. Passcode: ${passcode}. Link: ?tag=${id}`);
     } catch (err) {
       handleFirestoreError(err, OperationType.CREATE, `games/${gameId}/missions/${id}`);
+    }
+  };
+
+  const editMission = async (m: Mission) => {
+    const newName = prompt("New Name:", m.name) || m.name;
+    let newPasscode = m.passcode;
+    let newClickTarget = m.clickTarget;
+    if (m.type === 'code') {
+       newPasscode = prompt("New Passcode (empty for none):", m.passcode || "") || undefined;
+    } else if (m.type === 'clicker') {
+       newClickTarget = parseInt(prompt("New Click Target:", String(m.clickTarget || 50)) || "50", 10) || 50;
+    }
+    
+    if (newName !== m.name || newPasscode !== m.passcode || newClickTarget !== m.clickTarget) {
+       try {
+         await updateDoc(doc(db, `games/${gameId}/missions/${m.id}`), {
+            name: newName,
+            passcode: newPasscode,
+            clickTarget: newClickTarget
+         });
+         toast.success("Mission updated.");
+       } catch (err) {
+         handleFirestoreError(err, OperationType.UPDATE, `games/${gameId}/missions/${m.id}`);
+       }
     }
   };
 
@@ -179,12 +203,12 @@ export function AdminPanel({ user }: { user: any }) {
 
   const getScanUrl = (missionId: string) => {
     const url = new URL(window.location.href);
-    return `${url.protocol}//${url.host}${import.meta.env.BASE_URL}scan/${missionId}`;
+    return `${url.protocol}//${url.host}${import.meta.env.BASE_URL}scan/${missionId}?g=${gameId}`;
   };
 
   const getPlayerKillUrl = (playerId: string) => {
     const url = new URL(window.location.href);
-    return `${url.protocol}//${url.host}${import.meta.env.BASE_URL}scan/${playerId}`;
+    return `${url.protocol}//${url.host}${import.meta.env.BASE_URL}scan/${playerId}?g=${gameId}`;
   };
 
   const copyToClipboard = (text: string) => {
@@ -230,15 +254,20 @@ export function AdminPanel({ user }: { user: any }) {
                      </button>
                    </div>
                  </div>
-                 <button onClick={() => removeMission(m.id!)} className="text-red-500 p-2 hover:bg-red-500/20 rounded-full transition-colors cursor-pointer shrink-0">
-                   <Trash2 size={16} />
-                 </button>
+                 <div className="flex gap-2">
+                   <button onClick={() => editMission(m)} className="text-blue-500 p-2 hover:bg-blue-500/20 rounded-full transition-colors cursor-pointer shrink-0">
+                     <Edit2 size={16} />
+                   </button>
+                   <button onClick={() => removeMission(m.id!)} className="text-red-500 p-2 hover:bg-red-500/20 rounded-full transition-colors cursor-pointer shrink-0">
+                     <Trash2 size={16} />
+                   </button>
+                 </div>
                </div>
              ))}
            </div>
          )}
          
-         <div className="flex gap-2">
+         <div className="flex flex-col sm:flex-row gap-2">
            <input
              type="text"
              value={newMissionName}
@@ -246,12 +275,14 @@ export function AdminPanel({ user }: { user: any }) {
              placeholder="Custom Mission Name..."
              className="flex-1 bg-zinc-950 border border-zinc-800 text-zinc-200 text-sm font-bold tracking-wider rounded-xl px-4 py-3 focus:outline-none focus:border-blue-500 transition-colors"
            />
-           <button onClick={addCodeMission} className="flex items-center justify-center gap-2 px-6 py-3 border border-blue-500/30 text-blue-500 bg-blue-500/10 hover:bg-blue-500/20 rounded-xl font-bold transition-colors cursor-pointer uppercase tracking-widest text-sm shrink-0">
-              <Plus size={18} /> CODE
-           </button>
-           <button onClick={addClickerMission} className="flex items-center justify-center gap-2 px-6 py-3 border border-orange-500/30 text-orange-500 bg-orange-500/10 hover:bg-orange-500/20 rounded-xl font-bold transition-colors cursor-pointer uppercase tracking-widest text-sm shrink-0">
-              <Plus size={18} /> CLICKER
-           </button>
+           <div className="flex gap-2 flex-wrap sm:flex-nowrap">
+             <button onClick={addCodeMission} className="flex-1 sm:flex-none flex items-center justify-center gap-2 px-6 py-3 border border-blue-500/30 text-blue-500 bg-blue-500/10 hover:bg-blue-500/20 rounded-xl font-bold transition-colors cursor-pointer uppercase tracking-widest text-sm shrink-0">
+                <Plus size={18} /> CODE
+             </button>
+             <button onClick={addClickerMission} className="flex-1 sm:flex-none flex items-center justify-center gap-2 px-6 py-3 border border-orange-500/30 text-orange-500 bg-orange-500/10 hover:bg-orange-500/20 rounded-xl font-bold transition-colors cursor-pointer uppercase tracking-widest text-sm shrink-0">
+                <Plus size={18} /> CLICKER
+             </button>
+           </div>
          </div>
       </div>
 
@@ -262,9 +293,9 @@ export function AdminPanel({ user }: { user: any }) {
              <p className="font-bold text-red-500">Central Meeting Point</p>
              <div className="flex items-center gap-2 mt-1">
                <p className="text-[10px] text-zinc-500 font-mono opacity-70 truncate w-full select-all">
-                 {`${window.location.protocol}//${window.location.host}${import.meta.env.BASE_URL}scan/EMERGENCY`}
+                 {`${window.location.protocol}//${window.location.host}${import.meta.env.BASE_URL}scan/EMERGENCY?g=${gameId}`}
                </p>
-               <button onClick={() => copyToClipboard(`${window.location.protocol}//${window.location.host}${import.meta.env.BASE_URL}scan/EMERGENCY`)} className="text-zinc-400 hover:text-blue-500 transition-colors p-1 cursor-pointer shrink-0">
+               <button onClick={() => copyToClipboard(`${window.location.protocol}//${window.location.host}${import.meta.env.BASE_URL}scan/EMERGENCY?g=${gameId}`)} className="text-zinc-400 hover:text-blue-500 transition-colors p-1 cursor-pointer shrink-0">
                  <Copy size={14} />
                </button>
              </div>

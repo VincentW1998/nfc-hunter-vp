@@ -42,9 +42,8 @@ export function VotingView({ user }: { user: any }) {
       setTimeLeft(remaining);
       if (remaining <= 0) {
         clearInterval(timer);
-        if (game.ownerId === user.uid) {
-          endMeeting();
-        }
+        // Let anyone end the meeting to prevent deadlock if admin is offline
+        endMeeting();
       }
     }, 1000);
     return () => clearInterval(timer);
@@ -153,7 +152,7 @@ export function VotingView({ user }: { user: any }) {
                   <button 
                     key={p.id}
                     onClick={() => castVote(p.id!)}
-                    disabled={me.status !== "alive" || p.status !== "alive" || me.votedFor !== undefined && me.votedFor !== ""}
+                    disabled={me.status !== "alive" || p.status !== "alive"}
                     className={`flex items-center justify-between p-4 rounded-xl border text-left transition-all
                       ${!p.votedFor ? '' : 'pl-2'}
                       ${p.status !== 'alive' ? 'bg-red-500/10 border-red-500/30 opacity-50 cursor-not-allowed' : 
@@ -175,7 +174,7 @@ export function VotingView({ user }: { user: any }) {
                 ))}
                 <button 
                   onClick={() => castVote('skip')}
-                  disabled={me.status !== "alive" || (me.votedFor !== undefined && me.votedFor !== "")}
+                  disabled={me.status !== "alive"}
                   className={`flex items-center justify-between p-4 rounded-xl border text-left mt-4 transition-all
                     ${me.votedFor === 'skip' ? 'bg-zinc-700 border-zinc-500' : 'bg-zinc-950 border-zinc-800 hover:border-zinc-600 cursor-pointer'}
                   `}

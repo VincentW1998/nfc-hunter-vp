@@ -14,6 +14,8 @@ export function Lobby({ user }: { user: any }) {
 
   useEffect(() => {
     if (!gameId) return;
+    localStorage.setItem("currentGameId", gameId);
+    
     const unsubGame = onSnapshot(doc(db, "games", gameId), (snap) => {
       if (snap.exists()) {
         const data = snap.data() as Game;

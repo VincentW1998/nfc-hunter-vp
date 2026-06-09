@@ -20,11 +20,29 @@ export function EmergencyView({ user }: { user: any }) {
           return;
         }
 
-        await updateDoc(doc(db, "games", gameId), {
+        const gameRef = doc(db, "games", gameId);
+        const gameSnap = await getDoc(gameRef);
+        if (!gameSnap.exists()) return;
+        
+        const gameData = gameSnap.data();
+        if (gameData.lastEmergencyTime && Date.now() - gameData.lastEmergencyTime < 3 * 60 * 1000) {
+            // Already triggered recently
+            import("react-hot-toast").then(({ toast }) => toast.error("Emergency comms offline (3m cooldown)."));
+            navigate(`/game/${gameId}`);
+            return;
+        }
+
+        await updateDoc(gameRef, {
           status: "meeting",
+          lastEmergencyTime: Date.now(),
           updatedAt: Date.now()
         });
         
+        // Wait briefly for UI effect then navigate to meeting view
+        setTimeout(() => {
+          navigate(`/game/${gameId}/vote`);
+        }, 1500);
+
       } catch (err) {
         handleFirestoreError(err, OperationType.UPDATE, `games/${gameId}`);
       }

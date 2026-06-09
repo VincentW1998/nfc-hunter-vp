@@ -96,7 +96,7 @@ export function GameDash({ user }: { user: any }) {
     );
   }
 
-  const isKiller = me.role === "killer" || true; // For testing, everyone might not be assigned role yet since we didn't build role randomizer. Let's assume everyone can be unassigned for a bit.
+  const isKiller = me.role === "killer";
 
   return (
     <div className="min-h-screen bg-zinc-950 p-6 font-sans text-zinc-50 flex flex-col pt-12 relative">
@@ -187,7 +187,38 @@ export function GameDash({ user }: { user: any }) {
         <p className="text-[10px] text-zinc-500 font-bold tracking-widest uppercase mt-4 text-center">
           Scanner is Active. Physically scan NFC tags to interact.
         </p>
+        
+        <CooldownDisplay me={me} />
       </div>
+    </div>
+  );
+}
+
+function CooldownDisplay({ me }: { me: Player }) {
+  const [timeLeft, setTimeLeft] = useState(0);
+
+  useEffect(() => {
+    if (me.role !== 'killer' || !me.lastKillTime) return;
+    
+    const checkTimer = () => {
+      const remaining = Math.max(0, 60 - Math.floor((Date.now() - me.lastKillTime!) / 1000));
+      setTimeLeft(remaining);
+    };
+    
+    checkTimer();
+    const interval = setInterval(checkTimer, 1000);
+    return () => clearInterval(interval);
+  }, [me.lastKillTime, me.role]);
+
+  if (me.role !== 'killer') return null;
+
+  return (
+    <div className="mt-2 text-xs font-bold tracking-widest uppercase">
+      {timeLeft > 0 ? (
+        <span className="text-red-500 animate-pulse">WEAPON COOLING: {timeLeft}S</span>
+      ) : (
+        <span className="text-blue-500 text-[10px]">WEAPON READY</span>
+      )}
     </div>
   );
 }
