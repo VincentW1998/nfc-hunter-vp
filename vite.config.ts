@@ -5,7 +5,7 @@ import {defineConfig} from 'vite';
 
 export default defineConfig(() => {
   return {
-    base: './',
+    base: '/nfc-hunter-vp/', // Use repo name for GitHub Pages routing
     plugins: [react(), tailwindcss()],
     resolve: {
       alias: {

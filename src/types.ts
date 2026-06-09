@@ -1,4 +1,4 @@
-export type GameStatus = "lobby" | "playing" | "voting" | "finished";
+export type GameStatus = "lobby" | "playing" | "meeting" | "voting" | "finished";
 export type PlayerRole = "crewmate" | "killer" | "unassigned";
 export type PlayerStatus = "alive" | "dead" | "eliminated";
 export type MissionType = "code" | "clicker";
@@ -11,6 +11,7 @@ export interface Game {
   ownerId: string;
   createdAt: number;
   updatedAt: number;
+  votingStartTime?: number;
 }
 
 export interface PlayerTask {

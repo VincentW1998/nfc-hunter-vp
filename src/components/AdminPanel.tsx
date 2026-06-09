@@ -179,12 +179,12 @@ export function AdminPanel({ user }: { user: any }) {
 
   const getScanUrl = (missionId: string) => {
     const url = new URL(window.location.href);
-    return `${url.protocol}//${url.host}${url.pathname}#/game/${gameId}/mission/${missionId}`;
+    return `${url.protocol}//${url.host}${import.meta.env.BASE_URL}scan/${missionId}`;
   };
 
   const getPlayerKillUrl = (playerId: string) => {
     const url = new URL(window.location.href);
-    return `${url.protocol}//${url.host}${url.pathname}#/game/${gameId}/kill/${playerId}`;
+    return `${url.protocol}//${url.host}${import.meta.env.BASE_URL}scan/${playerId}`;
   };
 
   const copyToClipboard = (text: string) => {
@@ -252,6 +252,23 @@ export function AdminPanel({ user }: { user: any }) {
            <button onClick={addClickerMission} className="flex items-center justify-center gap-2 px-6 py-3 border border-orange-500/30 text-orange-500 bg-orange-500/10 hover:bg-orange-500/20 rounded-xl font-bold transition-colors cursor-pointer uppercase tracking-widest text-sm shrink-0">
               <Plus size={18} /> CLICKER
            </button>
+         </div>
+      </div>
+
+      <div className="bg-zinc-900 border border-zinc-800 p-6 rounded-[16px] mb-8 relative z-10 shadow-2xl">
+         <h2 className="text-sm text-zinc-400 mb-4 uppercase font-bold tracking-widest">Emergency Meeting Tag</h2>
+         <div className="bg-zinc-950 p-4 rounded-xl flex items-center justify-between border border-zinc-800">
+           <div className="flex-1 min-w-0 pr-4">
+             <p className="font-bold text-red-500">Central Meeting Point</p>
+             <div className="flex items-center gap-2 mt-1">
+               <p className="text-[10px] text-zinc-500 font-mono opacity-70 truncate w-full select-all">
+                 {`${window.location.protocol}//${window.location.host}${import.meta.env.BASE_URL}scan/EMERGENCY`}
+               </p>
+               <button onClick={() => copyToClipboard(`${window.location.protocol}//${window.location.host}${import.meta.env.BASE_URL}scan/EMERGENCY`)} className="text-zinc-400 hover:text-blue-500 transition-colors p-1 cursor-pointer shrink-0">
+                 <Copy size={14} />
+               </button>
+             </div>
+           </div>
          </div>
       </div>
 

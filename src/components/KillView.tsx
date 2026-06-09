@@ -20,22 +20,15 @@ export function KillView({ user }: { user: any }) {
             navigate(`/`); return;
         }
         const me = meSnap.data();
-        if (me.role !== 'killer' || me.status !== 'alive') {
-            toast.error("Unauthorized. Action denied.");
-            navigate(`/game/${gameId}`);
-            return;
-        }
-
-        const now = Date.now();
-        if (me.lastKillTime && now - me.lastKillTime < 60000) {
-            const left = Math.ceil((60000 - (now - me.lastKillTime)) / 1000);
-            toast.error(`Weapon cooling down. ${left}s remaining.`);
+        
+        if (me.status !== 'alive') {
+            toast.error("You are dead. You cannot do this.");
             navigate(`/game/${gameId}`);
             return;
         }
 
         if (targetId === user.uid) {
-            toast.error("You cannot eliminate yourself.");
+            toast.error("You cannot scan yourself.");
             navigate(`/game/${gameId}`);
             return;
         }
@@ -49,8 +42,29 @@ export function KillView({ user }: { user: any }) {
         }
 
         const target = targetSnap.data();
-        if (target.status !== 'alive') {
-            toast.error("Target is already inactive.");
+        
+        // If target is dead, report the body!
+        if (target.status === 'dead') {
+            await updateDoc(doc(db, "games", gameId), {
+              status: "meeting",
+              updatedAt: Date.now()
+            });
+            toast.success("Dead body reported!");
+            navigate(`/game/${gameId}`);
+            return;
+        }
+
+        // Target is alive. But are we a killer?
+        if (me.role !== 'killer') {
+            toast.error("You are a crewmate. You cannot eliminate operatives.");
+            navigate(`/game/${gameId}`);
+            return;
+        }
+
+        const now = Date.now();
+        if (me.lastKillTime && now - me.lastKillTime < 60000) {
+            const left = Math.ceil((60000 - (now - me.lastKillTime)) / 1000);
+            toast.error(`Weapon cooling down. ${left}s remaining.`);
             navigate(`/game/${gameId}`);
             return;
         }

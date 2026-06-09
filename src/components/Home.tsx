@@ -28,6 +28,7 @@ export function Home({ user }: { user: any }) {
         toast.error("Deployment code not found.");
         return;
       }
+      localStorage.setItem("currentGameId", gameId);
       navigate(`/lobby/${gameId}`);
     } catch (err) {
       handleFirestoreError(err, OperationType.GET, `games/${gameId}`);
@@ -58,6 +59,7 @@ export function Home({ user }: { user: any }) {
 
       await batch.commit();
 
+      localStorage.setItem("currentGameId", gameId);
       navigate(`/admin/${gameId}`);
     } catch (err) {
        handleFirestoreError(err, OperationType.CREATE, `games/${gameId}`);

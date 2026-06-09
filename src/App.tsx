@@ -4,7 +4,7 @@
  */
 
 import { Navigate } from "react-router-dom";
-import { HashRouter as Router, Routes, Route, useNavigate, useParams, useSearchParams } from "react-router-dom";
+import { BrowserRouter as Router, Routes, Route, useNavigate, useParams, useSearchParams } from "react-router-dom";
 import { useEffect, useState } from "react";
 import { auth, db } from "./firebase";
 import { onAuthStateChanged, signInWithPopup, GoogleAuthProvider, signInAnonymously, updateProfile } from "firebase/auth";
@@ -18,7 +18,9 @@ import { AdminPanel } from "./components/AdminPanel";
 import { MissionView } from "./components/MissionView";
 import { VotingView } from "./components/VotingView";
 import { KillView } from "./components/KillView";
+import { ScanRouter } from "./components/ScanRouter";
 import { Player, Game } from "./types";
+import { EmergencyView } from "./components/EmergencyView";
 
 export default function App() {
   const [user, setUser] = useState<any>(null);
@@ -103,7 +105,7 @@ export default function App() {
   }
 
   return (
-    <Router>
+    <Router basename={import.meta.env.BASE_URL}>
       <Toaster position="top-center" toastOptions={{ style: { background: '#18181b', color: '#fafafa', border: '1px solid #27272a' } }} />
       <Routes>
         <Route path="/" element={<Home user={user} />} />
@@ -112,7 +114,9 @@ export default function App() {
         <Route path="/admin/:gameId" element={<AdminPanel user={user} />} />
         <Route path="/game/:gameId/mission/:missionId" element={<MissionView user={user} />} />
         <Route path="/game/:gameId/kill/:targetId" element={<KillView user={user} />} />
+        <Route path="/game/:gameId/emergency" element={<EmergencyView user={user} />} />
         <Route path="/game/:gameId/vote" element={<VotingView user={user} />} />
+        <Route path="/scan/:tagId" element={<ScanRouter />} />
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
     </Router>

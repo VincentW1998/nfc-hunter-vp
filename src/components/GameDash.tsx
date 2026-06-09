@@ -20,7 +20,7 @@ export function GameDash({ user }: { user: any }) {
       if (snap.exists()) {
         const data = snap.data() as Game;
         setGame(data);
-        if (data.status === "voting") navigate(`/game/${gameId}/vote`);
+        if (data.status === "voting" || data.status === "meeting") navigate(`/game/${gameId}/vote`);
         if (data.status === "finished" || data.status === "lobby") navigate(`/lobby/${gameId}`);
       }
     });
@@ -77,18 +77,6 @@ export function GameDash({ user }: { user: any }) {
     }
   }, [players, game, me, gameId]);
 
-  const reportBody = async () => {
-    if (!gameId || me?.status !== "alive") return;
-    try {
-      await updateDoc(doc(db, "games", gameId), {
-        status: "voting",
-        updatedAt: Date.now()
-      });
-    } catch (err) {
-      handleFirestoreError(err, OperationType.UPDATE, `games/${gameId}`);
-    }
-  };
-
   if (!game || !me) return <div className="text-white p-8 font-mono">Syncing telemetry...</div>;
 
   if (me.status === "dead") {
@@ -99,7 +87,7 @@ export function GameDash({ user }: { user: any }) {
           </div>
           <h1 className="text-4xl font-bold text-red-500 uppercase tracking-widest mb-4">YOU ARE DEAD</h1>
           <p className="text-red-200 mb-8 max-w-sm">
-             You have been assassinated. Do not speak. Sit down where you are and wait for a living operative to trace your signal (Report).
+             You have been assassinated. Do not speak. Sit down where you are and wait for a living operative to find your NFC tag to discover your body.
           </p>
           <div className="text-xs font-bold bg-red-900/50 text-red-400 px-6 py-3 rounded-full uppercase tracking-widest border border-red-500/30">
              Ghost Mode Active
@@ -185,21 +173,19 @@ export function GameDash({ user }: { user: any }) {
           </div>
         )}
 
-        {me.status === "alive" && (
-          <button 
-            onClick={reportBody}
-            className="w-full bg-red-500 hover:bg-red-600 text-white font-bold py-6 rounded-full flex items-center justify-center gap-3 transition-transform hover:scale-[1.02] mb-8 shadow-lg uppercase tracking-widest cursor-pointer"
-          >
-            <AlertTriangle size={24} />
-            REPORT EMERGENCY (VOTE)
-          </button>
-        )}
-
       </div>
 
       <div className="mt-auto pt-8 flex flex-col items-center justify-center relative z-10 w-full max-w-md mx-auto pb-4 gap-2">
-        <p className="text-[10px] text-zinc-500 font-bold tracking-widest uppercase max-w-xs text-center">
-          Scanner is Active. To eliminate a target, physically scan their NFC identity tag.
+        <h3 className="text-xs text-zinc-500 font-bold tracking-widest uppercase mb-2">Network Status</h3>
+        <div className="flex flex-wrap gap-2 justify-center w-full">
+          {players.map(p => (
+            <div key={p.id} className={`px-3 py-1.5 rounded text-xs font-bold tracking-widest uppercase ${p.status === 'alive' ? 'bg-zinc-900 border border-zinc-800 text-zinc-300' : 'bg-red-500/10 border border-red-500/30 text-red-500 line-through'}`}>
+              {p.name}
+            </div>
+          ))}
+        </div>
+        <p className="text-[10px] text-zinc-500 font-bold tracking-widest uppercase mt-4 text-center">
+          Scanner is Active. Physically scan NFC tags to interact.
         </p>
       </div>
     </div>
