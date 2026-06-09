@@ -62,8 +62,8 @@ export function KillView({ user }: { user: any }) {
         }
 
         const now = Date.now();
-        if (me.lastKillTime && now - me.lastKillTime < 60000) {
-            const left = Math.ceil((60000 - (now - me.lastKillTime)) / 1000);
+        if (me.lastKillTime && now - me.lastKillTime < 120000) {
+            const left = Math.ceil((120000 - (now - me.lastKillTime)) / 1000);
             toast.error(`Weapon cooling down. ${left}s remaining.`);
             navigate(`/game/${gameId}`);
             return;

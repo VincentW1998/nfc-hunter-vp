@@ -201,7 +201,7 @@ function CooldownDisplay({ me }: { me: Player }) {
     if (me.role !== 'killer' || !me.lastKillTime) return;
     
     const checkTimer = () => {
-      const remaining = Math.max(0, 60 - Math.floor((Date.now() - me.lastKillTime!) / 1000));
+      const remaining = Math.max(0, 120 - Math.floor((Date.now() - me.lastKillTime!) / 1000));
       setTimeLeft(remaining);
     };
     
@@ -213,11 +213,12 @@ function CooldownDisplay({ me }: { me: Player }) {
   if (me.role !== 'killer') return null;
 
   return (
-    <div className="mt-2 text-xs font-bold tracking-widest uppercase">
+    <div className="mt-4 w-full p-4 rounded-xl border flex flex-col items-center justify-center bg-zinc-950 shadow-inner">
+      <h3 className="text-[10px] text-zinc-500 font-bold tracking-widest uppercase mb-2">Weapon Status</h3>
       {timeLeft > 0 ? (
-        <span className="text-red-500 animate-pulse">WEAPON COOLING: {timeLeft}S</span>
+        <span className="text-red-500 font-mono text-2xl animate-pulse">COOLING: {Math.floor(timeLeft / 60)}:{(timeLeft % 60).toString().padStart(2, '0')}</span>
       ) : (
-        <span className="text-blue-500 text-[10px]">WEAPON READY</span>
+        <span className="text-blue-500 font-mono text-2xl font-bold tracking-widest">WEAPON READY</span>
       )}
     </div>
   );

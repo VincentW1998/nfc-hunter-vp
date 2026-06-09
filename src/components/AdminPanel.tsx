@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { doc, getDoc, updateDoc, collection, setDoc, deleteDoc, onSnapshot, getDocs, writeBatch } from "firebase/firestore";
+import { doc, getDoc, updateDoc, collection, setDoc, deleteDoc, onSnapshot, getDocs, writeBatch, deleteField } from "firebase/firestore";
 import { db } from "../firebase";
 import { toast } from "react-hot-toast";
 import { Game, Mission, Player, handleFirestoreError, OperationType } from "../types";
@@ -87,11 +87,15 @@ export function AdminPanel({ user }: { user: any }) {
     
     if (newName !== m.name || newPasscode !== m.passcode || newClickTarget !== m.clickTarget) {
        try {
-         await updateDoc(doc(db, `games/${gameId}/missions/${m.id}`), {
-            name: newName,
-            passcode: newPasscode,
-            clickTarget: newClickTarget
-         });
+         const updates: any = { name: newName };
+         if (newClickTarget !== undefined) updates.clickTarget = newClickTarget;
+         if (newPasscode !== undefined) {
+             updates.passcode = newPasscode;
+         } else if (m.passcode !== undefined) {
+             updates.passcode = deleteField();
+         }
+
+         await updateDoc(doc(db, `games/${gameId}/missions/${m.id}`), updates);
          toast.success("Mission updated.");
        } catch (err) {
          handleFirestoreError(err, OperationType.UPDATE, `games/${gameId}/missions/${m.id}`);
