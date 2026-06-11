@@ -54,13 +54,15 @@ export function GameDash({ user }: { user: any }) {
     // Check task completion
     let allTasksDone = false;
     const crewmates = players.filter(p => p.role === "crewmate");
+    const currentRound = game.round || 0;
     if (crewmates.length > 0) {
       let totalTasks = 0;
       let completedTasks = 0;
       crewmates.forEach(p => {
         if (p.tasks) {
-          totalTasks += p.tasks.length;
-          completedTasks += p.tasks.filter(t => t.completed).length;
+          const currentTasks = p.tasks.filter(t => t.round === currentRound);
+          totalTasks += currentTasks.length;
+          completedTasks += currentTasks.filter(t => t.completed).length;
         }
       });
       if (totalTasks > 0 && totalTasks === completedTasks) {
@@ -135,7 +137,7 @@ export function GameDash({ user }: { user: any }) {
           <div className="bg-zinc-900 border border-zinc-800 rounded-[16px] p-6 mb-8 relative shadow-2xl">
             <h3 className="text-sm text-zinc-400 font-bold tracking-widest uppercase mb-4 text-center border-b border-zinc-800 pb-2">Assigned Tasks</h3>
             <div className="flex flex-col gap-3">
-              {me.tasks.map((task, idx) => {
+              {me.tasks.filter(t => t.round === (game?.round || 0)).map((task, idx) => {
                  const m = missions[task.missionId];
                  return (
                    <div key={idx} className="flex items-center justify-between p-3 bg-zinc-950 rounded-xl border border-zinc-800">
@@ -159,10 +161,12 @@ export function GameDash({ user }: { user: any }) {
                     width: (() => {
                       let totalTasks = 0;
                       let completedTasks = 0;
+                      const currentRound = game?.round || 0;
                       players.filter(p => p.role === 'crewmate').forEach(p => {
                         if (p.tasks) {
-                          totalTasks += p.tasks.length;
-                          completedTasks += p.tasks.filter(t => t.completed).length;
+                          const currentTasks = p.tasks.filter(t => t.round === currentRound);
+                          totalTasks += currentTasks.length;
+                          completedTasks += currentTasks.filter(t => t.completed).length;
                         }
                       });
                       return totalTasks === 0 ? '0%' : `${(completedTasks / totalTasks) * 100}%`;

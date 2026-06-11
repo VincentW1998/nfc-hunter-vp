@@ -13,11 +13,13 @@ export interface Game {
   updatedAt: number;
   votingStartTime?: number;
   lastEmergencyTime?: number;
+  round?: number;
 }
 
 export interface PlayerTask {
   missionId: string;
   completed: boolean;
+  round?: number;
 }
 
 export interface Player {

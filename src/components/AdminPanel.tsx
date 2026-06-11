@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { doc, updateDoc, collection, setDoc, deleteDoc, onSnapshot, getDocs, writeBatch, deleteField } from "firebase/firestore";
+import { doc, getDoc, updateDoc, collection, setDoc, deleteDoc, onSnapshot, getDocs, writeBatch, deleteField } from "firebase/firestore";
 import { db } from "../firebase";
 import { toast } from "react-hot-toast";
 import { Game, Mission, Player, handleFirestoreError, OperationType } from "../types";
@@ -165,6 +165,12 @@ export function AdminPanel({ user }: { user: any }) {
     try {
       const batch = writeBatch(db);
 
+      const gameSnap = await getDoc(doc(db, "games", gameId));
+      let newRound = 1;
+      if (gameSnap.exists()) {
+        newRound = (gameSnap.data().round || 0) + 1;
+      }
+
       // Fetch all players to assign roles
       const playersRef = collection(db, `games/${gameId}/players`);
       const snap = await getDocs(playersRef);
@@ -188,7 +194,7 @@ export function AdminPanel({ user }: { user: any }) {
           if (!isKiller && allMissionIds.length > 0) {
              const mShuffled = [...allMissionIds].sort(() => 0.5 - Math.random());
              const numTasks = Math.min(3, mShuffled.length); // Give each up to 3 tasks
-             tasks = mShuffled.slice(0, numTasks).map(mId => ({ missionId: mId, completed: false }));
+             tasks = mShuffled.slice(0, numTasks).map(mId => ({ missionId: mId, completed: false, round: newRound }));
           }
 
           batch.update(doc(db, `games/${gameId}/players`, shuffled[i].id), { 
@@ -202,6 +208,7 @@ export function AdminPanel({ user }: { user: any }) {
       batch.update(doc(db, "games", gameId), {
         status: "playing",
         winner: null,
+        round: newRound,
         updatedAt: Date.now()
       });
 
