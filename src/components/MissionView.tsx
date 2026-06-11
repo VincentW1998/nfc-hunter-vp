@@ -1,6 +1,6 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { doc, getDoc, updateDoc } from "firebase/firestore";
+import { doc, getDoc, updateDoc, onSnapshot } from "firebase/firestore";
 import { db } from "../firebase";
 import { Game, Player, Mission, handleFirestoreError, OperationType } from "../types";
 import { toast } from "react-hot-toast";
@@ -13,6 +13,7 @@ export function MissionView({ user }: { user: any }) {
   const [loading, setLoading] = useState(true);
   const [code, setCode] = useState("");
   const [completed, setCompleted] = useState(false);
+  const completeTaskCalled = useRef(false);
 
   useEffect(() => {
     async function fetchMission() {
@@ -36,18 +37,34 @@ export function MissionView({ user }: { user: any }) {
 
   useEffect(() => {
     if (!gameId) return;
-    import("firebase/firestore").then(({ onSnapshot, doc }) => {
-      const unsub = onSnapshot(doc(db, "games", gameId), (snap) => {
-        if (snap.exists()) {
-          const mgame = snap.data() as Game;
-          if (mgame.status === "meeting" || mgame.status === "voting") {
-             navigate(`/game/${gameId}/vote`);
-          }
+    
+    // Listen for Emergency Meetings
+    const unsubGame = onSnapshot(doc(db, "games", gameId), (snap) => {
+      if (snap.exists()) {
+        const mgame = snap.data() as Game;
+        if (mgame.status === "meeting" || mgame.status === "voting") {
+           toast.error("EMERGENCY MEETING CALLED");
+           navigate(`/game/${gameId}/vote`);
         }
-      });
-      return () => unsub();
+      }
     });
-  }, [gameId, navigate]);
+
+    // Listen for Player Death while doing mission
+    const unsubPlayer = onSnapshot(doc(db, `games/${gameId}/players`, user.uid), (snap) => {
+      if (snap.exists()) {
+        const pData = snap.data() as Player;
+        if (pData.status === "dead") {
+           toast.error("YOU HAVE BEEN KILLED.", { style: { background: '#ef4444' } });
+           navigate(`/game/${gameId}`);
+        }
+      }
+    });
+
+    return () => {
+      unsubGame();
+      unsubPlayer();
+    };
+  }, [gameId, user.uid, navigate]);
 
   const [clicks, setClicks] = useState(0);
   const clickTarget = mission?.clickTarget || 50;
@@ -66,6 +83,7 @@ export function MissionView({ user }: { user: any }) {
 
   const handlePointerDown = () => {
     if (mission?.type !== 'clicker') return;
+    if (completeTaskCalled.current) return;
     const newClicks = clicks + 1;
     setClicks(newClicks);
     if (newClicks >= clickTarget) {
@@ -74,6 +92,9 @@ export function MissionView({ user }: { user: any }) {
   };
 
   const completeTask = async () => {
+    if (completeTaskCalled.current) return;
+    completeTaskCalled.current = true;
+
     try {
       const pRef = doc(db, `games/${gameId}/players`, user.uid);
       const pSnap = await getDoc(pRef);
@@ -94,6 +115,7 @@ export function MissionView({ user }: { user: any }) {
       }, 1500);
     } catch (err) {
       handleFirestoreError(err, OperationType.UPDATE, `games/${gameId}`);
+      completeTaskCalled.current = false;
     }
   };
 
