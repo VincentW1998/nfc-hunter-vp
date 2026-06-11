@@ -31,6 +31,7 @@ export interface Player {
   tasks?: PlayerTask[];
   votedFor?: string | null;
   lastKillTime?: number;
+  round?: number;
 }
 
 export interface Mission {

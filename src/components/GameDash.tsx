@@ -47,6 +47,9 @@ export function GameDash({ user }: { user: any }) {
   useEffect(() => {
     if (game?.status !== "playing" || me?.id !== game?.ownerId) return;
     
+    // Wait for all players to sync to the current round to avoid transient out-of-sync evaluations
+    if (players.some(p => p.role !== 'unassigned' && p.round !== game.round)) return;
+    
     // Auto-evaluation of Game State
     const aliveCrewmates = players.filter(p => p.role === "crewmate" && p.status === "alive");
     const aliveKillers = players.filter(p => p.role === "killer" && p.status === "alive");

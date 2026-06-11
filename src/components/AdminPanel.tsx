@@ -200,6 +200,7 @@ export function AdminPanel({ user }: { user: any }) {
           batch.update(doc(db, `games/${gameId}/players`, shuffled[i].id), { 
             role,
             status: "alive",
+            round: newRound,
             tasks
           });
         }
@@ -464,6 +465,26 @@ export function AdminPanel({ user }: { user: any }) {
             </button>
           </div>
         )}
+      </div>
+
+      <div className="mt-12 flex justify-center pb-8">
+         <button onClick={async () => {
+             if (window.confirm("WARNING: This will completely destroy this game room, kick all players, and delete all missions. This cannot be undone. Are you sure?")) {
+                 try {
+                     const batch = writeBatch(db);
+                     players.forEach(p => batch.delete(doc(db, `games/${gameId}/players`, p.id!)));
+                     missions.forEach(m => batch.delete(doc(db, `games/${gameId}/missions`, m.id!)));
+                     batch.delete(doc(db, "games", gameId!));
+                     await batch.commit();
+                     toast.success("Game room destroyed.");
+                     navigate("/");
+                 } catch (e) {
+                     toast.error("Failed to delete room.");
+                 }
+             }
+         }} className="text-xs text-red-500/50 hover:text-red-500 font-bold uppercase tracking-widest transition-colors cursor-pointer border border-transparent hover:border-red-500/30 px-4 py-2 rounded">
+             DESTROY ROOM & RETURN HOME
+         </button>
       </div>
     </div>
   );
