@@ -1,7 +1,7 @@
 export type GameStatus = "lobby" | "playing" | "meeting" | "voting" | "finished";
 export type PlayerRole = "crewmate" | "killer" | "unassigned";
 export type PlayerStatus = "alive" | "dead" | "eliminated";
-export type MissionType = "code" | "clicker";
+export type MissionType = "code" | "clicker" | "wires" | "simon" | "gauge" | "oxygen";
 import { toast } from "react-hot-toast";
 
 export interface Game {

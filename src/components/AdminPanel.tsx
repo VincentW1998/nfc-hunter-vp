@@ -3,7 +3,7 @@ import { useParams, useNavigate } from "react-router-dom";
 import { doc, getDoc, updateDoc, collection, setDoc, deleteDoc, onSnapshot, getDocs, writeBatch, deleteField } from "firebase/firestore";
 import { db } from "../firebase";
 import { toast } from "react-hot-toast";
-import { Game, Mission, Player, handleFirestoreError, OperationType } from "../types";
+import { Game, Mission, MissionType, Player, handleFirestoreError, OperationType } from "../types";
 import { Settings, Plus, Play, Trash2, ArrowLeft, Copy, Edit2, ChevronDown, ChevronUp, Save, X } from "lucide-react";
 
 export function AdminPanel({ user }: { user: any }) {
@@ -14,7 +14,7 @@ export function AdminPanel({ user }: { user: any }) {
   const [players, setPlayers] = useState<Player[]>([]);
   const [loading, setLoading] = useState(true);
   
-  const [newMissionType, setNewMissionType] = useState<"none" | "code" | "clicker">("none");
+  const [newMissionType, setNewMissionType] = useState<"none" | "code" | "clicker" | "wires" | "simon" | "gauge" | "oxygen">("none");
   const [newMissionName, setNewMissionName] = useState("");
   const [newMissionPasscode, setNewMissionPasscode] = useState("");
   const [newMissionTaps, setNewMissionTaps] = useState("50");
@@ -65,7 +65,7 @@ export function AdminPanel({ user }: { user: any }) {
     } else {
       newMission = {
         name,
-        type: "clicker",
+        type: newMissionType as MissionType,
         clickTarget: parseInt(newMissionTaps, 10) || 50
       };
     }
@@ -286,6 +286,7 @@ export function AdminPanel({ user }: { user: any }) {
                        {m.name} 
                        {m.type === 'code' && m.passcode && <span className="ml-2 text-xs font-mono text-blue-500 bg-blue-500/10 px-2 py-0.5 rounded border border-blue-500/20">{m.passcode}</span>}
                        {m.type === 'clicker' && <span className="ml-2 text-xs font-mono text-orange-500 bg-orange-500/10 px-2 py-0.5 rounded border border-orange-500/20">{m.clickTarget} TAPS</span>}
+                       {(m.type !== 'code' && m.type !== 'clicker') && <span className="ml-2 text-xs font-mono text-emerald-500 bg-emerald-500/10 px-2 py-0.5 rounded border border-emerald-500/20">{m.type.toUpperCase()}</span>}
                      </p>
                      <div className="flex items-center gap-2 mt-1">
                        <p className="text-[10px] text-zinc-500 font-mono opacity-70 truncate max-w-[200px] sm:max-w-[250px] select-all">
@@ -329,7 +330,7 @@ export function AdminPanel({ user }: { user: any }) {
                             placeholder="Leave empty for none"
                           />
                         </div>
-                      ) : (
+                      ) : m.type === 'clicker' ? (
                         <div className="space-y-1">
                           <label className="text-[10px] text-zinc-500 font-bold tracking-widest uppercase">Required Taps (10-500)</label>
                           <input
@@ -340,7 +341,7 @@ export function AdminPanel({ user }: { user: any }) {
                             className="w-full bg-zinc-900 border border-zinc-700 text-zinc-200 text-sm font-bold tracking-wider rounded-lg px-3 py-2 focus:outline-none focus:border-orange-500"
                           />
                         </div>
-                      )}
+                      ) : null}
                       
                       <div className="flex justify-end gap-2 mt-2">
                         <button onClick={() => setEditingMissionId(null)} className="px-3 py-1.5 rounded-lg text-xs font-bold uppercase tracking-widest text-zinc-400 hover:text-zinc-50 transition-colors">Cancel</button>
@@ -356,18 +357,30 @@ export function AdminPanel({ user }: { user: any }) {
          )}
          
          {newMissionType === "none" ? (
-           <div className="flex gap-2 flex-wrap sm:flex-nowrap">
-             <button onClick={() => setNewMissionType('code')} className="flex-1 flex items-center justify-center gap-2 px-6 py-3 border border-blue-500/30 text-blue-500 bg-blue-500/10 hover:bg-blue-500/20 rounded-xl font-bold transition-colors cursor-pointer uppercase tracking-widest text-sm">
-                <Plus size={18} /> NEW CODE TASK
+           <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+             <button onClick={() => setNewMissionType('code')} className="flex items-center justify-center gap-2 px-4 py-3 border border-blue-500/30 text-blue-500 bg-blue-500/10 hover:bg-blue-500/20 rounded-xl font-bold transition-colors cursor-pointer uppercase tracking-widest text-[10px] sm:text-xs text-center leading-tight">
+                <Plus size={16} /> CODE TASK
              </button>
-             <button onClick={() => setNewMissionType('clicker')} className="flex-1 flex items-center justify-center gap-2 px-6 py-3 border border-orange-500/30 text-orange-500 bg-orange-500/10 hover:bg-orange-500/20 rounded-xl font-bold transition-colors cursor-pointer uppercase tracking-widest text-sm">
-                <Plus size={18} /> NEW CLICKER TASK
+             <button onClick={() => setNewMissionType('clicker')} className="flex items-center justify-center gap-2 px-4 py-3 border border-orange-500/30 text-orange-500 bg-orange-500/10 hover:bg-orange-500/20 rounded-xl font-bold transition-colors cursor-pointer uppercase tracking-widest text-[10px] sm:text-xs text-center leading-tight">
+                <Plus size={16} /> CLICKER TASK
+             </button>
+             <button onClick={() => setNewMissionType('wires')} className="flex items-center justify-center gap-2 px-4 py-3 border border-yellow-500/30 text-yellow-500 bg-yellow-500/10 hover:bg-yellow-500/20 rounded-xl font-bold transition-colors cursor-pointer uppercase tracking-widest text-[10px] sm:text-xs text-center leading-tight">
+                <Plus size={16} /> WIRES TASK
+             </button>
+             <button onClick={() => setNewMissionType('simon')} className="flex items-center justify-center gap-2 px-4 py-3 border border-purple-500/30 text-purple-500 bg-purple-500/10 hover:bg-purple-500/20 rounded-xl font-bold transition-colors cursor-pointer uppercase tracking-widest text-[10px] sm:text-xs text-center leading-tight">
+                <Plus size={16} /> SIMON TASK
+             </button>
+             <button onClick={() => setNewMissionType('gauge')} className="flex items-center justify-center gap-2 px-4 py-3 border border-green-500/30 text-green-500 bg-green-500/10 hover:bg-green-500/20 rounded-xl font-bold transition-colors cursor-pointer uppercase tracking-widest text-[10px] sm:text-xs text-center leading-tight">
+                <Plus size={16} /> GAUGE TASK
+             </button>
+             <button onClick={() => setNewMissionType('oxygen')} className="flex items-center justify-center gap-2 px-4 py-3 border border-cyan-500/30 text-cyan-500 bg-cyan-500/10 hover:bg-cyan-500/20 rounded-xl font-bold transition-colors cursor-pointer uppercase tracking-widest text-[10px] sm:text-xs text-center leading-tight">
+                <Plus size={16} /> OXYGEN TASK
              </button>
            </div>
          ) : (
-           <div className={`p-4 rounded-xl border animate-in fade-in slide-in-from-bottom-2 ${newMissionType === 'code' ? 'bg-blue-500/5 border-blue-500/30' : 'bg-orange-500/5 border-orange-500/30'}`}>
+           <div className={`p-4 rounded-xl border animate-in fade-in slide-in-from-bottom-2 ${newMissionType === 'code' ? 'bg-blue-500/5 border-blue-500/30' : 'bg-emerald-500/5 border-emerald-500/30'}`}>
              <div className="flex items-center justify-between mb-4">
-                <h3 className={`text-sm font-bold uppercase tracking-widest flex items-center gap-2 ${newMissionType === 'code' ? 'text-blue-500' : 'text-orange-500'}`}>
+                <h3 className={`text-sm font-bold uppercase tracking-widest flex items-center gap-2 ${newMissionType === 'code' ? 'text-blue-500' : newMissionType === 'clicker' ? 'text-orange-500' : 'text-emerald-500'}`}>
                   <Settings size={16} /> NEW {newMissionType.toUpperCase()} TASK
                 </h3>
                 <button onClick={() => setNewMissionType('none')} className="text-zinc-500 hover:text-zinc-200">
@@ -398,7 +411,7 @@ export function AdminPanel({ user }: { user: any }) {
                      className="w-full bg-zinc-950 border border-zinc-800 text-zinc-200 text-sm font-bold tracking-wider rounded-xl px-4 py-3 focus:outline-none focus:border-blue-500 transition-colors uppercase"
                    />
                  </div>
-               ) : (
+               ) : newMissionType === 'clicker' ? (
                  <div>
                    <label className="text-[10px] text-zinc-500 font-bold tracking-widest uppercase block mb-1">Require Tap Count</label>
                    <input
@@ -406,12 +419,12 @@ export function AdminPanel({ user }: { user: any }) {
                      value={newMissionTaps}
                      onChange={(e) => setNewMissionTaps(e.target.value)}
                      min="10" max="500"
-                     className="w-full bg-zinc-950 border border-zinc-800 text-zinc-200 text-sm font-bold tracking-wider rounded-xl px-4 py-3 focus:outline-none focus:border-orange-500 transition-colors"
+                     className="w-full bg-zinc-950 border border-zinc-800 text-zinc-200 text-sm font-bold tracking-wider rounded-lg px-4 py-3 focus:outline-none focus:border-orange-500 transition-colors"
                    />
                  </div>
-               )}
+               ) : null}
                
-               <button onClick={addMission} className={`w-full flex items-center justify-center gap-2 px-6 py-3 rounded-xl font-bold transition-colors cursor-pointer uppercase tracking-widest text-sm mt-2 ${newMissionType === 'code' ? 'bg-blue-500 hover:bg-blue-600 text-white' : 'bg-orange-500 hover:bg-orange-600 text-white'}`}>
+               <button onClick={addMission} className={`w-full flex items-center justify-center gap-2 px-6 py-3 rounded-xl font-bold transition-colors cursor-pointer uppercase tracking-widest text-sm mt-2 ${newMissionType === 'code' ? 'bg-blue-500 hover:bg-blue-600 text-white' : 'bg-emerald-500 hover:bg-emerald-600 text-white'}`}>
                   <Plus size={18} /> CREATE
                </button>
              </div>

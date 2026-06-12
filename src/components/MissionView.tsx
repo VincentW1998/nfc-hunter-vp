@@ -5,6 +5,10 @@ import { db } from "../firebase";
 import { Game, Player, Mission, handleFirestoreError, OperationType } from "../types";
 import { toast } from "react-hot-toast";
 import { CheckCircle2, Terminal } from "lucide-react";
+import { WiresGame } from "./minigames/WiresGame";
+import { SimonGame } from "./minigames/SimonGame";
+import { GaugeGame } from "./minigames/GaugeGame";
+import { OxygenGame } from "./minigames/OxygenGame";
 
 export function MissionView({ user }: { user: any }) {
   const { gameId, missionId } = useParams();
@@ -158,7 +162,7 @@ export function MissionView({ user }: { user: any }) {
               <h2 className="text-xl font-bold tracking-widest uppercase">{mission?.name}</h2>
             </div>
             
-            {mission?.type === 'code' ? (
+            {mission?.type === 'code' && (
               <>
                 <p className="text-zinc-400 mb-8 text-sm leading-relaxed">
                   Enter the override sequence located at this physical checkpoint to register completion.
@@ -178,7 +182,9 @@ export function MissionView({ user }: { user: any }) {
                   </button>
                 </form>
               </>
-            ) : (
+            )}
+            
+            {mission?.type === 'clicker' && (
               <>
                 <p className="text-zinc-400 mb-8 text-sm leading-relaxed">
                   Reactor overload imminent. Rapidly tap the core to stabilize.
@@ -196,6 +202,11 @@ export function MissionView({ user }: { user: any }) {
                 </button>
               </>
             )}
+            
+            {mission?.type === 'wires' && <WiresGame onComplete={completeTask} />}
+            {mission?.type === 'simon' && <SimonGame onComplete={completeTask} />}
+            {mission?.type === 'gauge' && <GaugeGame onComplete={completeTask} />}
+            {mission?.type === 'oxygen' && <OxygenGame onComplete={completeTask} />}
           </>
         )}
       </div>
