@@ -9,6 +9,7 @@ import { WiresGame } from "./minigames/WiresGame";
 import { SimonGame } from "./minigames/SimonGame";
 import { GaugeGame } from "./minigames/GaugeGame";
 import { OxygenGame } from "./minigames/OxygenGame";
+import { vibrate, VIBRATION } from "../utils/vibration";
 
 export function MissionView({ user }: { user: any }) {
   const { gameId, missionId } = useParams();
@@ -49,6 +50,7 @@ export function MissionView({ user }: { user: any }) {
         const mgame = snap.data() as Game;
         setGame(mgame);
         if (mgame.status === "meeting" || mgame.status === "voting") {
+           vibrate(VIBRATION.meeting);
            toast.error("EMERGENCY MEETING CALLED");
            navigate(`/game/${gameId}/vote`);
         }
@@ -60,6 +62,7 @@ export function MissionView({ user }: { user: any }) {
       if (snap.exists()) {
         const pData = snap.data() as Player;
         if (pData.status === "dead") {
+           vibrate(VIBRATION.death);
            toast.error("YOU HAVE BEEN KILLED.", { style: { background: '#ef4444' } });
            navigate(`/game/${gameId}`);
         }
@@ -80,6 +83,7 @@ export function MissionView({ user }: { user: any }) {
     if (!gameId || !user || !mission) return;
 
     if (mission.type === 'code' && mission.passcode && code.trim().toUpperCase() !== mission.passcode.toUpperCase()) {
+      vibrate(VIBRATION.error);
       toast.error("Invalid sequence.");
       return;
     }
@@ -90,6 +94,7 @@ export function MissionView({ user }: { user: any }) {
   const handlePointerDown = () => {
     if (mission?.type !== 'clicker') return;
     if (completeTaskCalled.current) return;
+    vibrate(VIBRATION.tap);
     const newClicks = clicks + 1;
     setClicks(newClicks);
     if (newClicks >= clickTarget) {
@@ -116,6 +121,7 @@ export function MissionView({ user }: { user: any }) {
          }
       }
 
+      vibrate(VIBRATION.success);
       setCompleted(true);
       toast.success("Mission Success");
       setTimeout(() => {

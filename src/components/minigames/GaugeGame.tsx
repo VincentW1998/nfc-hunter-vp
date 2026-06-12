@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
+import { vibrate, VIBRATION } from '../../utils/vibration';
 
 export function GaugeGame({ onComplete }: { onComplete: () => void }) {
   const [position, setPosition] = useState(0);
@@ -40,6 +41,7 @@ export function GaugeGame({ onComplete }: { onComplete: () => void }) {
 
   const handlePress = () => {
     if (position >= targetZone.start && position <= targetZone.end) {
+      vibrate(VIBRATION.tap);
       setSuccessCount(prev => {
         const next = prev + 1;
         if (next >= targetRequired) {
@@ -53,6 +55,7 @@ export function GaugeGame({ onComplete }: { onComplete: () => void }) {
       });
     } else {
       // Missed
+      vibrate(VIBRATION.error);
       setSuccessCount((prev) => Math.max(0, prev - 1));
     }
   };

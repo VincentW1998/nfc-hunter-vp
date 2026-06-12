@@ -4,6 +4,7 @@ import { doc, getDoc, onSnapshot, setDoc, collection } from "firebase/firestore"
 import { db } from "../firebase";
 import { Game, Player, handleFirestoreError, OperationType } from "../types";
 import { toast } from "react-hot-toast";
+import { vibrate, VIBRATION } from "../utils/vibration";
 
 export function Lobby({ user }: { user: any }) {
   const { gameId } = useParams();
@@ -21,6 +22,7 @@ export function Lobby({ user }: { user: any }) {
         const data = snap.data() as Game;
         setGame(data);
         if (data.status === "playing") {
+          vibrate(VIBRATION.success);
           navigate(`/game/${gameId}`);
         }
       } else {

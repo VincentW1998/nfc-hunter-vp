@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { vibrate, VIBRATION } from '../../utils/vibration';
 
 export function OxygenGame({ onComplete }: { onComplete: () => void }) {
   const [leftValue, setLeftValue] = useState(25);
@@ -39,7 +40,7 @@ export function OxygenGame({ onComplete }: { onComplete: () => void }) {
                  type="range" 
                  min="0" max="100" 
                  value={leftValue} 
-                 onChange={(e) => setLeftValue(parseInt(e.target.value))}
+                 onChange={(e) => { setLeftValue(parseInt(e.target.value)); vibrate(VIBRATION.tap); }}
                  className="absolute inset-0 w-[400%] h-full opacity-0 origin-bottom-left -rotate-90 translate-y-full cursor-ns-resize"
                  // Rotation is tricky with inputs, using a vertical slider css is better if supported
                  style={{ WebkitAppearance: 'slider-vertical' } as any}
@@ -57,7 +58,7 @@ export function OxygenGame({ onComplete }: { onComplete: () => void }) {
                  type="range" 
                  min="0" max="100" 
                  value={rightValue} 
-                 onChange={(e) => setRightValue(parseInt(e.target.value))}
+                 onChange={(e) => { setRightValue(parseInt(e.target.value)); vibrate(VIBRATION.tap); }}
                  className="absolute inset-0 w-full h-full opacity-0 cursor-ns-resize"
                  style={{ WebkitAppearance: 'slider-vertical' } as any}
                />

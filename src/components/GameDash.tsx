@@ -5,6 +5,7 @@ import { db } from "../firebase";
 import { Game, Player, Mission, handleFirestoreError, OperationType } from "../types";
 import { toast } from "react-hot-toast";
 import { AlertTriangle, ShieldAlert, CheckCircle2, Circle, Settings } from "lucide-react";
+import { vibrate, VIBRATION } from "../utils/vibration";
 
 export function GameDash({ user }: { user: any }) {
   const { gameId } = useParams();
@@ -20,13 +21,25 @@ export function GameDash({ user }: { user: any }) {
       if (snap.exists()) {
         const data = snap.data() as Game;
         setGame(data);
-        if (data.status === "voting" || data.status === "meeting") navigate(`/game/${gameId}/vote`);
+        if (data.status === "voting" || data.status === "meeting") {
+          vibrate(VIBRATION.meeting);
+          navigate(`/game/${gameId}/vote`);
+        }
         if (data.status === "finished" || data.status === "lobby") navigate(`/lobby/${gameId}`);
       }
     });
 
     const unsubMe = onSnapshot(doc(db, `games/${gameId}/players`, user.uid), (snap) => {
-      if(snap.exists()) setMe({ id: snap.id, ...snap.data() } as Player);
+      if(snap.exists()) {
+         const p = { id: snap.id, ...snap.data() } as Player;
+         setMe(prev => {
+            if (prev && prev.status === 'alive' && p.status === 'dead') {
+               vibrate(VIBRATION.death);
+               toast.error("YOU HAVE BEEN KILLED.", { style: { background: '#ef4444' } });
+            }
+            return p;
+         });
+      }
     });
 
     const unsubAll = onSnapshot(collection(db, `games/${gameId}/players`), (snap) => {

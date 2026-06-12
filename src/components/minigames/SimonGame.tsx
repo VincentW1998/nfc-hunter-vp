@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
+import { vibrate, VIBRATION } from '../../utils/vibration';
 
 const COLORS = [
   { id: 0, color: 'bg-red-500', active: 'bg-red-400 shadow-[0_0_30px_rgba(239,68,68,0.8)]' },
@@ -36,6 +37,7 @@ export function SimonGame({ onComplete }: { onComplete: () => void }) {
     
     for (let i = 0; i < seq.length; i++) {
        setActiveButton(seq[i]);
+       vibrate(VIBRATION.tap);
        await new Promise(r => setTimeout(r, 400));
        setActiveButton(null);
        await new Promise(r => setTimeout(r, 200));
@@ -46,6 +48,7 @@ export function SimonGame({ onComplete }: { onComplete: () => void }) {
   const handlePress = (id: number) => {
     if (isPlaying || gameStatus !== 'playing') return;
     
+    vibrate(VIBRATION.tap);
     setActiveButton(id);
     setTimeout(() => setActiveButton(null), 200);
     
@@ -57,6 +60,7 @@ export function SimonGame({ onComplete }: { onComplete: () => void }) {
     
     if (!isCorrect) {
       setGameStatus('failed');
+      vibrate(VIBRATION.error);
       setTimeout(() => {
          startNextRound([]); // Restart from scratch
       }, 1000);

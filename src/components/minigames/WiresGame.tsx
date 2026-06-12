@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
+import { vibrate, VIBRATION } from '../../utils/vibration';
 
 // Colors for wires
 const COLORS = ['#ef4444', '#3b82f6', '#eab308', '#22c55e']; // red, blue, yellow, green
@@ -22,6 +23,7 @@ export function WiresGame({ onComplete }: { onComplete: () => void }) {
         const newConns = { ...connections };
         delete newConns[idx];
         setConnections(newConns);
+        vibrate(VIBRATION.tap);
       }
       setActiveWire({ startIdx: idx, color: leftNodes[idx] });
     }
@@ -36,10 +38,13 @@ export function WiresGame({ onComplete }: { onComplete: () => void }) {
       if (startColor === endColor) {
         const newConns = { ...connections, [activeWire.startIdx]: idx };
         setConnections(newConns);
+        vibrate(VIBRATION.tap);
         
         if (Object.keys(newConns).length === COLORS.length) {
           setTimeout(onComplete, 500);
         }
+      } else {
+        vibrate(VIBRATION.error);
       }
     }
     setActiveWire(null);
