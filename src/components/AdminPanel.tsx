@@ -141,8 +141,7 @@ export function AdminPanel({ user }: { user: any }) {
       snap.docs.forEach(d => {
         batch.update(doc(db, `games/${gameId}/players`, d.id), {
           role: "unassigned",
-          status: "alive",
-          tasks: []
+          status: "alive"
         });
       });
 
@@ -194,8 +193,7 @@ export function AdminPanel({ user }: { user: any }) {
           batch.update(doc(db, `games/${gameId}/players`, shuffled[i].id), { 
             role,
             status: "alive",
-            round: newRound,
-            tasks: [] // everyone has empty tasks, they are tracked globally for UI, or we can just ignore tasks.
+            round: newRound
           });
         }
       }

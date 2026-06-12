@@ -17,19 +17,12 @@ export interface Game {
   completedMissions?: string[];
 }
 
-export interface PlayerTask {
-  missionId: string;
-  completed: boolean;
-  round?: number;
-}
-
 export interface Player {
   id?: string;
   name: string;
   role: PlayerRole;
   status: PlayerStatus;
   joinTime: number;
-  tasks?: PlayerTask[];
   votedFor?: string | null;
   lastKillTime?: number;
   round?: number;
