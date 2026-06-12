@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { doc, getDoc, updateDoc, onSnapshot } from "firebase/firestore";
 import { db } from "../firebase";
@@ -123,7 +123,11 @@ export function MissionView({ user }: { user: any }) {
     }
   };
 
-  if (loading) return <div className="text-white p-8 font-mono">Decoding payload...</div>;
+  const isAlreadyCompleted = React.useMemo(() => {
+    return game?.completedMissions?.includes(missionId || "") || false;
+  }, [game, missionId]);
+
+  if (loading || !game) return <div className="text-white p-8 font-mono">Decoding payload...</div>;
 
   return (
     <div className="min-h-screen bg-zinc-950 flex flex-col items-center justify-center p-6 font-sans text-zinc-50 relative">
@@ -135,6 +139,15 @@ export function MissionView({ user }: { user: any }) {
             <CheckCircle2 size={64} className="text-green-500 mb-4" />
             <h2 className="text-2xl font-bold tracking-widest text-green-500 uppercase">VERIFIED</h2>
             <p className="text-zinc-400 mt-2 text-sm italic">Returning to dashboard...</p>
+          </div>
+        ) : isAlreadyCompleted ? (
+          <div className="flex flex-col items-center justify-center py-8 animate-in zoom-in">
+            <CheckCircle2 size={64} className="text-blue-500 mb-4" />
+            <h2 className="text-2xl font-bold tracking-widest text-blue-500 uppercase">ALREADY COMPLETED</h2>
+            <p className="text-zinc-400 mt-4 text-sm mb-8">This mission has already been stabilized by another crewmate.</p>
+            <button onClick={() => navigate(`/game/${gameId}`)} className="w-full bg-blue-500 hover:bg-blue-600 py-4 rounded-full font-bold transition-all shadow-lg text-lg tracking-widest cursor-pointer text-white uppercase">
+              RETURN
+            </button>
           </div>
         ) : (
           <>
