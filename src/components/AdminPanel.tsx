@@ -237,14 +237,39 @@ export function AdminPanel({ user }: { user: any }) {
     <div className="min-h-screen bg-zinc-950 p-6 font-sans text-zinc-50 max-w-2xl mx-auto relative relative">
        <div className="absolute inset-0 bg-[radial-gradient(circle_at_2px_2px,_#27272a_1px,_transparent_0)] bg-[length:24px_24px] opacity-30 pointer-events-none"></div>
 
-      <div className="flex items-center gap-4 mb-8 relative z-10">
-        <button onClick={() => navigate(`/lobby/${gameId}`)} className="p-2 hover:bg-zinc-900 rounded-full cursor-pointer transition-colors border border-transparent hover:border-zinc-800">
-          <ArrowLeft size={24} />
+      <div className="flex items-center justify-between mb-8 relative z-10 w-full">
+        <div className="flex items-center gap-4">
+          <button onClick={() => navigate(`/lobby/${gameId}`)} className="p-2 hover:bg-zinc-900 rounded-full cursor-pointer transition-colors border border-transparent hover:border-zinc-800 shrink-0">
+            <ArrowLeft size={24} />
+          </button>
+          <h1 className="text-xl sm:text-2xl font-bold flex items-center gap-2 tracking-tight truncate">
+            <Settings className="text-blue-500 shrink-0" />
+            <span className="hidden sm:inline">CMD CENTER:</span>
+            <span className="text-zinc-500 truncate">{gameId}</span>
+          </h1>
+        </div>
+        <button onClick={() => {
+            let result = "=== MISSIONS ===\n";
+            if (missions.length === 0) result += "No missions defined.\n";
+            missions.forEach(m => {
+                result += `${m.name}: ${getScanUrl(m.id!)}\n`;
+            });
+            
+            result += "\n=== EMERGENCY MEETING ===\n";
+            result += `${window.location.protocol}//${window.location.host}${import.meta.env.BASE_URL}scan/EMERGENCY?g=${gameId}\n`;
+            
+            result += "\n=== PLAYERS ===\n";
+            if (players.length === 0) result += "No players registered.\n";
+            players.forEach(p => {
+                result += `${p.name}: ${getPlayerKillUrl(p.id!)}\n`;
+            });
+            
+            navigator.clipboard.writeText(result);
+            toast.success("All URLs copied to clipboard!");
+        }} className="flex items-center gap-2 text-xs font-bold tracking-widest uppercase bg-zinc-900 border border-zinc-800 hover:border-blue-500 hover:text-blue-500 transition-colors py-2 px-4 rounded-xl cursor-pointer shrink-0">
+          <Copy size={16} />
+          <span className="hidden sm:inline">COPY ALL URLs</span>
         </button>
-        <h1 className="text-2xl font-bold flex items-center gap-2 tracking-tight">
-          <Settings className="text-blue-500" />
-          CMD CENTER: <span className="text-zinc-500">{gameId}</span>
-        </h1>
       </div>
 
       <div className="bg-zinc-900 border border-zinc-800 p-6 rounded-[16px] mb-8 relative z-10 shadow-2xl">
