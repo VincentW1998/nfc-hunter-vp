@@ -4,7 +4,7 @@ import { doc, getDoc, onSnapshot, updateDoc, collection } from "firebase/firesto
 import { db } from "../firebase";
 import { Game, Player, Mission, handleFirestoreError, OperationType } from "../types";
 import { toast } from "react-hot-toast";
-import { AlertTriangle, ShieldAlert, CheckCircle2, Circle } from "lucide-react";
+import { AlertTriangle, ShieldAlert, CheckCircle2, Circle, Settings } from "lucide-react";
 
 export function GameDash({ user }: { user: any }) {
   const { gameId } = useParams();
@@ -105,7 +105,14 @@ export function GameDash({ user }: { user: any }) {
 
       <div className="flex justify-between items-center mb-12 relative z-10 w-full max-w-md mx-auto">
         <div>
-          <h1 className="text-xl font-bold tracking-widest text-zinc-300">NFC HUNTER</h1>
+          <h1 className="text-xl font-bold tracking-widest text-zinc-300 flex items-center gap-2">
+             NFC HUNTER
+             {me.id === game.ownerId && (
+                <button onClick={() => navigate(`/admin/${gameId}`)} className="p-1.5 bg-zinc-900 border border-zinc-800 rounded-md hover:bg-zinc-800 hover:text-blue-500 transition-colors text-zinc-500 cursor-pointer">
+                  <Settings size={14} />
+                </button>
+             )}
+          </h1>
           <p className="text-xs text-zinc-500 font-bold tracking-wider mt-1">
             {players.filter(p => p.status === 'alive').length} ALIVE / {players.length} TOTAL
           </p>
