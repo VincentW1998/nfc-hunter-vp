@@ -10,6 +10,7 @@ export function MissionView({ user }: { user: any }) {
   const { gameId, missionId } = useParams();
   const navigate = useNavigate();
   const [mission, setMission] = useState<Mission | null>(null);
+  const [game, setGame] = useState<Game | null>(null);
   const [loading, setLoading] = useState(true);
   const [code, setCode] = useState("");
   const [completed, setCompleted] = useState(false);
@@ -38,10 +39,11 @@ export function MissionView({ user }: { user: any }) {
   useEffect(() => {
     if (!gameId) return;
     
-    // Listen for Emergency Meetings
+    // Listen for Emergency Meetings and globally completed missions
     const unsubGame = onSnapshot(doc(db, "games", gameId), (snap) => {
       if (snap.exists()) {
         const mgame = snap.data() as Game;
+        setGame(mgame);
         if (mgame.status === "meeting" || mgame.status === "voting") {
            toast.error("EMERGENCY MEETING CALLED");
            navigate(`/game/${gameId}/vote`);
@@ -96,16 +98,18 @@ export function MissionView({ user }: { user: any }) {
     completeTaskCalled.current = true;
 
     try {
-      const pRef = doc(db, `games/${gameId}/players`, user.uid);
-      const pSnap = await getDoc(pRef);
-      if (pSnap.exists()) {
-        const pData = pSnap.data() as Player;
-        if (pData.tasks) {
-           const updatedTasks = pData.tasks.map(t => 
-             t.missionId === missionId ? { ...t, completed: true } : t
-           );
-           await updateDoc(pRef, { tasks: updatedTasks });
-        }
+      if (game?.completedMissions?.includes(missionId!)) {
+         // Already done globally, just show success
+      } else {
+         const gameRef = doc(db, "games", gameId!);
+         const gameSnap = await getDoc(gameRef);
+         if (gameSnap.exists()) {
+             const gData = gameSnap.data() as Game;
+             const currentCompleted = gData.completedMissions || [];
+             if (!currentCompleted.includes(missionId!)) {
+                 await updateDoc(gameRef, { completedMissions: [...currentCompleted, missionId!] });
+             }
+         }
       }
 
       setCompleted(true);

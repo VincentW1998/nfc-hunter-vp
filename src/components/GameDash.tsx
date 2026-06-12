@@ -57,17 +57,9 @@ export function GameDash({ user }: { user: any }) {
     // Check task completion
     let allTasksDone = false;
     const crewmates = players.filter(p => p.role === "crewmate");
-    const currentRound = game.round || 0;
     if (crewmates.length > 0) {
-      let totalTasks = 0;
-      let completedTasks = 0;
-      crewmates.forEach(p => {
-        if (p.tasks) {
-          const currentTasks = p.tasks.filter(t => t.round === currentRound);
-          totalTasks += currentTasks.length;
-          completedTasks += currentTasks.filter(t => t.completed).length;
-        }
-      });
+      const totalTasks = Object.keys(missions).length;
+      const completedTasks = game.completedMissions?.length || 0;
       if (totalTasks > 0 && totalTasks === completedTasks) {
         allTasksDone = true;
       }
@@ -75,8 +67,8 @@ export function GameDash({ user }: { user: any }) {
 
     if ((aliveKillers.length === 0 || allTasksDone) && players.length > 0 && players.some(p => p.role !== 'unassigned')) {
         updateDoc(doc(db, "games", gameId!), { status: "finished", winner: "crewmates" });
-        toast.success("CREWMATES WIN (Tasks Completed)!");
-    } else if (aliveCrewmates.length === 0 && players.length > 0 && players.some(p => p.role !== 'unassigned')) {
+        toast.success("CREWMATES WIN!");
+    } else if (aliveKillers.length > 0 && aliveCrewmates.length <= aliveKillers.length && players.length > 0 && players.some(p => p.role !== 'unassigned')) {
         updateDoc(doc(db, "games", gameId!), { status: "finished", winner: "killers" });
         toast.error("KILLERS WIN!");
     }
@@ -136,18 +128,18 @@ export function GameDash({ user }: { user: any }) {
           </p>
         </div>
 
-        {me.role === 'crewmate' && me.tasks && me.tasks.length > 0 && (
+        {me.role === 'crewmate' && Object.keys(missions).length > 0 && (
           <div className="bg-zinc-900 border border-zinc-800 rounded-[16px] p-6 mb-8 relative shadow-2xl">
-            <h3 className="text-sm text-zinc-400 font-bold tracking-widest uppercase mb-4 text-center border-b border-zinc-800 pb-2">Assigned Tasks</h3>
+            <h3 className="text-sm text-zinc-400 font-bold tracking-widest uppercase mb-4 text-center border-b border-zinc-800 pb-2">Global Mission Status</h3>
             <div className="flex flex-col gap-3">
-              {me.tasks.filter(t => t.round === (game?.round || 0)).map((task, idx) => {
-                 const m = missions[task.missionId];
+              {Object.values(missions).map((m, idx) => {
+                 const isCompleted = game.completedMissions?.includes(m.id!);
                  return (
                    <div key={idx} className="flex items-center justify-between p-3 bg-zinc-950 rounded-xl border border-zinc-800">
-                     <span className={`text-sm font-bold ${task.completed ? 'text-zinc-500 line-through' : 'text-zinc-200'}`}>
+                     <span className={`text-sm font-bold ${isCompleted ? 'text-zinc-500 line-through' : 'text-zinc-200'}`}>
                        {m?.name || "Unknown Task"}
                      </span>
-                     {task.completed ? (
+                     {isCompleted ? (
                        <CheckCircle2 size={18} className="text-green-500" />
                      ) : (
                        <Circle size={18} className="text-zinc-600" />
@@ -162,17 +154,10 @@ export function GameDash({ user }: { user: any }) {
                <div className="w-full bg-zinc-950 rounded-full h-2 overflow-hidden border border-zinc-800">
                   <div className="bg-blue-500 h-full transition-all duration-500" style={{
                     width: (() => {
-                      let totalTasks = 0;
-                      let completedTasks = 0;
-                      const currentRound = game?.round || 0;
-                      players.filter(p => p.role === 'crewmate').forEach(p => {
-                        if (p.tasks) {
-                          const currentTasks = p.tasks.filter(t => t.round === currentRound);
-                          totalTasks += currentTasks.length;
-                          completedTasks += currentTasks.filter(t => t.completed).length;
-                        }
-                      });
-                      return totalTasks === 0 ? '0%' : `${(completedTasks / totalTasks) * 100}%`;
+                      const totalTasks = Object.keys(missions).length;
+                      if (totalTasks === 0) return '0%';
+                      const completedTasks = game.completedMissions?.length || 0;
+                      return `${(completedTasks / totalTasks) * 100}%`;
                     })()
                   }}></div>
                </div>

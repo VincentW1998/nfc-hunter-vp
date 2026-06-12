@@ -14,6 +14,7 @@ export interface Game {
   votingStartTime?: number;
   lastEmergencyTime?: number;
   round?: number;
+  completedMissions?: string[];
 }
 
 export interface PlayerTask {

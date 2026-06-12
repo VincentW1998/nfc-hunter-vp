@@ -149,6 +149,7 @@ export function AdminPanel({ user }: { user: any }) {
       batch.update(doc(db, "games", gameId), {
         status: "lobby",
         winner: null,
+        completedMissions: [],
         updatedAt: Date.now()
       });
 
@@ -190,18 +191,11 @@ export function AdminPanel({ user }: { user: any }) {
           const isKiller = i < numKillers;
           const role = isKiller ? "killer" : "crewmate";
           
-          let tasks: any[] = [];
-          if (!isKiller && allMissionIds.length > 0) {
-             const mShuffled = [...allMissionIds].sort(() => 0.5 - Math.random());
-             const numTasks = Math.min(3, mShuffled.length); // Give each up to 3 tasks
-             tasks = mShuffled.slice(0, numTasks).map(mId => ({ missionId: mId, completed: false, round: newRound }));
-          }
-
           batch.update(doc(db, `games/${gameId}/players`, shuffled[i].id), { 
             role,
             status: "alive",
             round: newRound,
-            tasks
+            tasks: [] // everyone has empty tasks, they are tracked globally for UI, or we can just ignore tasks.
           });
         }
       }
@@ -210,6 +204,7 @@ export function AdminPanel({ user }: { user: any }) {
         status: "playing",
         winner: null,
         round: newRound,
+        completedMissions: [],
         updatedAt: Date.now()
       });
 
