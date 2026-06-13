@@ -42,7 +42,7 @@ export function AdminPanel({ user }: { user: any }) {
     });
 
     const unsubMissions = onSnapshot(collection(db, `games/${gameId}/missions`), (snap) => {
-      setMissions(snap.docs.map(d => ({ id: d.id, ...d.data() } as Mission)));
+      setMissions(snap.docs.map(d => ({ id: d.id, ...d.data() } as Mission)).sort((a, b) => (a.createdAt || 0) - (b.createdAt || 0)));
     });
 
     const unsubPlayers = onSnapshot(collection(db, `games/${gameId}/players`), (snap) => {
@@ -63,13 +63,15 @@ export function AdminPanel({ user }: { user: any }) {
         name,
         type: "code",
         description: newMissionDescription.trim() || undefined,
-        passcode: newMissionPasscode.trim() || Math.floor(1000 + Math.random() * 9000).toString()
+        passcode: newMissionPasscode.trim() || Math.floor(1000 + Math.random() * 9000).toString(),
+        createdAt: Date.now()
       };
     } else {
       newMission = {
         name,
         type: newMissionType as MissionType,
-        clickTarget: parseInt(newMissionTaps, 10) || 50
+        clickTarget: parseInt(newMissionTaps, 10) || 50,
+        createdAt: Date.now()
       };
     }
 
@@ -294,9 +296,17 @@ export function AdminPanel({ user }: { user: any }) {
                    <div className="flex-1 min-w-0 pr-4">
                      <p className="font-bold text-zinc-200">
                        {m.name} 
-                       {m.type === 'code' && m.passcode && <span className="ml-2 text-xs font-mono text-blue-500 bg-blue-500/10 px-2 py-0.5 rounded border border-blue-500/20">{m.passcode}</span>}
-                       {m.type === 'clicker' && <span className="ml-2 text-xs font-mono text-orange-500 bg-orange-500/10 px-2 py-0.5 rounded border border-orange-500/20">{m.clickTarget} TAPS</span>}
-                       {(m.type !== 'code' && m.type !== 'clicker') && <span className="ml-2 text-xs font-mono text-emerald-500 bg-emerald-500/10 px-2 py-0.5 rounded border border-emerald-500/20">{m.type.toUpperCase()}</span>}
+                       {(() => {
+                           switch(m.type) {
+                             case 'code': return <span className="ml-2 text-xs font-mono text-blue-500 bg-blue-500/10 px-2 py-0.5 rounded border border-blue-500/20">{m.passcode || 'CODE'}</span>;
+                             case 'clicker': return <span className="ml-2 text-xs font-mono text-orange-500 bg-orange-500/10 px-2 py-0.5 rounded border border-orange-500/20">{m.clickTarget} TAPS</span>;
+                             case 'wires': return <span className="ml-2 text-xs font-mono text-yellow-500 bg-yellow-500/10 px-2 py-0.5 rounded border border-yellow-500/20">WIRES</span>;
+                             case 'simon': return <span className="ml-2 text-xs font-mono text-purple-500 bg-purple-500/10 px-2 py-0.5 rounded border border-purple-500/20">SIMON</span>;
+                             case 'gauge': return <span className="ml-2 text-xs font-mono text-green-500 bg-green-500/10 px-2 py-0.5 rounded border border-green-500/20">GAUGE</span>;
+                             case 'oxygen': return <span className="ml-2 text-xs font-mono text-cyan-500 bg-cyan-500/10 px-2 py-0.5 rounded border border-cyan-500/20">OXYGEN</span>;
+                             default: return <span className="ml-2 text-xs font-mono text-emerald-500 bg-emerald-500/10 px-2 py-0.5 rounded border border-emerald-500/20">{m.type.toUpperCase()}</span>;
+                           }
+                        })()}
                      </p>
                      <div className="flex items-center gap-2 mt-1">
                        <p className="text-[10px] text-zinc-500 font-mono opacity-70 truncate max-w-[200px] sm:max-w-[250px] select-all">

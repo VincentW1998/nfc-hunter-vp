@@ -35,6 +35,7 @@ export interface Mission {
   description?: string;
   passcode?: string;
   clickTarget?: number;
+  createdAt?: number;
 }
 
 export enum OperationType {
