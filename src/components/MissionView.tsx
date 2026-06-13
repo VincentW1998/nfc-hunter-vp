@@ -170,8 +170,8 @@ export function MissionView({ user }: { user: any }) {
             
             {mission?.type === 'code' && (
               <>
-                <p className="text-zinc-400 mb-8 text-sm leading-relaxed">
-                  Enter the override sequence located at this physical checkpoint to register completion.
+                <p className="text-zinc-400 mb-8 text-sm leading-relaxed whitespace-pre-wrap">
+                  {mission?.description || "Enter the override sequence located at this physical checkpoint to register completion."}
                 </p>
 
                 <form onSubmit={submitCodeTask} className="flex flex-col gap-4">

@@ -32,6 +32,7 @@ export interface Mission {
   id?: string;
   name: string;
   type: MissionType;
+  description?: string;
   passcode?: string;
   clickTarget?: number;
 }

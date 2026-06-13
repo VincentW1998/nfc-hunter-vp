@@ -16,11 +16,13 @@ export function AdminPanel({ user }: { user: any }) {
   
   const [newMissionType, setNewMissionType] = useState<"none" | "code" | "clicker" | "wires" | "simon" | "gauge" | "oxygen">("none");
   const [newMissionName, setNewMissionName] = useState("");
+  const [newMissionDescription, setNewMissionDescription] = useState("");
   const [newMissionPasscode, setNewMissionPasscode] = useState("");
   const [newMissionTaps, setNewMissionTaps] = useState("50");
 
   const [editingMissionId, setEditingMissionId] = useState<string | null>(null);
   const [editName, setEditName] = useState("");
+  const [editDescription, setEditDescription] = useState("");
   const [editPasscode, setEditPasscode] = useState("");
   const [editTaps, setEditTaps] = useState("");
 
@@ -60,6 +62,7 @@ export function AdminPanel({ user }: { user: any }) {
       newMission = {
         name,
         type: "code",
+        description: newMissionDescription.trim() || undefined,
         passcode: newMissionPasscode.trim() || Math.floor(1000 + Math.random() * 9000).toString()
       };
     } else {
@@ -73,6 +76,7 @@ export function AdminPanel({ user }: { user: any }) {
     try {
       await setDoc(doc(db, `games/${gameId}/missions`, id), newMission);
       setNewMissionName("");
+      setNewMissionDescription("");
       setNewMissionPasscode("");
       setNewMissionTaps("50");
       setNewMissionType("none");
@@ -85,6 +89,7 @@ export function AdminPanel({ user }: { user: any }) {
   const startEditing = (m: Mission) => {
     setEditingMissionId(m.id!);
     setEditName(m.name);
+    setEditDescription(m.description || "");
     setEditPasscode(m.passcode || "");
     setEditTaps(String(m.clickTarget || 50));
   };
@@ -96,6 +101,11 @@ export function AdminPanel({ user }: { user: any }) {
       const updates: any = { name: editName.trim() || m.name };
       
       if (m.type === 'code') {
+        if (editDescription.trim()) {
+           updates.description = editDescription.trim();
+        } else {
+           updates.description = deleteField();
+        }
         if (editPasscode.trim()) {
            updates.passcode = editPasscode.trim().toUpperCase();
         } else {
@@ -320,16 +330,27 @@ export function AdminPanel({ user }: { user: any }) {
                       </div>
                       
                       {m.type === 'code' ? (
-                        <div className="space-y-1">
-                          <label className="text-[10px] text-zinc-500 font-bold tracking-widest uppercase">Secret Code / Sequence</label>
-                          <input
-                            type="text"
-                            value={editPasscode}
-                            onChange={(e) => setEditPasscode(e.target.value.toUpperCase())}
-                            className="w-full bg-zinc-900 border border-zinc-700 text-zinc-200 text-sm font-bold tracking-wider rounded-lg px-3 py-2 focus:outline-none focus:border-blue-500 uppercase"
-                            placeholder="Leave empty for none"
-                          />
-                        </div>
+                        <>
+                          <div className="space-y-1">
+                            <label className="text-[10px] text-zinc-500 font-bold tracking-widest uppercase">Enigma / Description</label>
+                            <textarea
+                              value={editDescription}
+                              onChange={(e) => setEditDescription(e.target.value)}
+                              className="w-full bg-zinc-900 border border-zinc-700 text-zinc-200 text-sm tracking-wider rounded-lg px-3 py-2 focus:outline-none focus:border-blue-500 min-h-[60px]"
+                              placeholder="Optional text to help players find the code..."
+                            />
+                          </div>
+                          <div className="space-y-1">
+                            <label className="text-[10px] text-zinc-500 font-bold tracking-widest uppercase">Secret Code / Sequence</label>
+                            <input
+                              type="text"
+                              value={editPasscode}
+                              onChange={(e) => setEditPasscode(e.target.value.toUpperCase())}
+                              className="w-full bg-zinc-900 border border-zinc-700 text-zinc-200 text-sm font-bold tracking-wider rounded-lg px-3 py-2 focus:outline-none focus:border-blue-500 uppercase"
+                              placeholder="Leave empty for none"
+                            />
+                          </div>
+                        </>
                       ) : m.type === 'clicker' ? (
                         <div className="space-y-1">
                           <label className="text-[10px] text-zinc-500 font-bold tracking-widest uppercase">Required Taps (10-500)</label>
@@ -401,16 +422,27 @@ export function AdminPanel({ user }: { user: any }) {
                </div>
                
                {newMissionType === 'code' ? (
-                 <div>
-                   <label className="text-[10px] text-zinc-500 font-bold tracking-widest uppercase block mb-1">Passcode / Sequence</label>
-                   <input
-                     type="text"
-                     value={newMissionPasscode}
-                     onChange={(e) => setNewMissionPasscode(e.target.value.toUpperCase())}
-                     placeholder="e.g. ALPHA9 (Leaves empty for random)"
-                     className="w-full bg-zinc-950 border border-zinc-800 text-zinc-200 text-sm font-bold tracking-wider rounded-xl px-4 py-3 focus:outline-none focus:border-blue-500 transition-colors uppercase"
-                   />
-                 </div>
+                 <>
+                   <div>
+                     <label className="text-[10px] text-zinc-500 font-bold tracking-widest uppercase block mb-1">Enigma / Description</label>
+                     <textarea
+                       value={newMissionDescription}
+                       onChange={(e) => setNewMissionDescription(e.target.value)}
+                       placeholder="Optional text to help players find the code..."
+                       className="w-full bg-zinc-950 border border-zinc-800 text-zinc-200 text-sm tracking-wider rounded-xl px-4 py-3 focus:outline-none focus:border-blue-500 transition-colors min-h-[80px]"
+                     />
+                   </div>
+                   <div>
+                     <label className="text-[10px] text-zinc-500 font-bold tracking-widest uppercase block mb-1">Passcode / Sequence</label>
+                     <input
+                       type="text"
+                       value={newMissionPasscode}
+                       onChange={(e) => setNewMissionPasscode(e.target.value.toUpperCase())}
+                       placeholder="e.g. ALPHA9 (Leaves empty for random)"
+                       className="w-full bg-zinc-950 border border-zinc-800 text-zinc-200 text-sm font-bold tracking-wider rounded-xl px-4 py-3 focus:outline-none focus:border-blue-500 transition-colors uppercase"
+                     />
+                   </div>
+                 </>
                ) : newMissionType === 'clicker' ? (
                  <div>
                    <label className="text-[10px] text-zinc-500 font-bold tracking-widest uppercase block mb-1">Require Tap Count</label>
