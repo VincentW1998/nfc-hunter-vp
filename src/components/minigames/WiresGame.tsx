@@ -5,10 +5,18 @@ import { vibrate, VIBRATION } from '../../utils/vibration';
 const COLORS = ['#ef4444', '#3b82f6', '#eab308', '#22c55e']; // red, blue, yellow, green
 
 export function WiresGame({ onComplete }: { onComplete: () => void }) {
+  const [phase, setPhase] = useState<'memorize' | 'connect'>('memorize');
+  const [timeLeft, setTimeLeft] = useState(10);
   const [leftNodes, setLeftNodes] = useState<string[]>([]);
   const [rightNodes, setRightNodes] = useState<string[]>([]);
   const [connections, setConnections] = useState<Record<number, number>>({});
   const [activeWire, setActiveWire] = useState<{ startIdx: number, color: string } | null>(null);
+
+  const [pointerPos, setPointerPos] = useState<{ x: number, y: number } | null>(null);
+
+  const containerRef = useRef<HTMLDivElement>(null);
+  const leftRefs = useRef<(HTMLDivElement | null)[]>([]);
+  const rightRefs = useRef<(HTMLDivElement | null)[]>([]);
 
   useEffect(() => {
     // Shuffle colors for left and right
@@ -16,88 +24,183 @@ export function WiresGame({ onComplete }: { onComplete: () => void }) {
     setRightNodes([...COLORS].sort(() => Math.random() - 0.5));
   }, []);
 
-  const handleNodeDown = (idx: number, side: 'left' | 'right') => {
-    if (side === 'left') {
-      // If already connected, disconnect it
-      if (connections[idx] !== undefined) {
-        const newConns = { ...connections };
-        delete newConns[idx];
-        setConnections(newConns);
-        vibrate(VIBRATION.tap);
-      }
-      setActiveWire({ startIdx: idx, color: leftNodes[idx] });
+  useEffect(() => {
+    if (phase === 'memorize') {
+      const timer = setInterval(() => {
+        setTimeLeft(prev => {
+          if (prev <= 1) {
+            clearInterval(timer);
+            setPhase('connect');
+            return 0;
+          }
+          return prev - 1;
+        });
+      }, 1000);
+      return () => clearInterval(timer);
+    }
+  }, [phase]);
+
+  const getRelativePos = (element: HTMLElement | null) => {
+     if (!element || !containerRef.current) return { x: 0, y: 0 };
+     const rect = element.getBoundingClientRect();
+     const containerRect = containerRef.current.getBoundingClientRect();
+     return {
+       x: rect.left - containerRect.left + rect.width / 2,
+       y: rect.top - containerRect.top + rect.height / 2
+     };
+  };
+
+  const handlePointerDownLeft = (idx: number, e: React.PointerEvent) => {
+    if (phase !== 'connect') return;
+    
+    // If already connected, disconnect it
+    if (connections[idx] !== undefined) {
+      const newConns = { ...connections };
+      delete newConns[idx];
+      setConnections(newConns);
+      vibrate(VIBRATION.tap);
+    }
+    setActiveWire({ startIdx: idx, color: leftNodes[idx] });
+    
+    const containerRect = containerRef.current?.getBoundingClientRect();
+    if (containerRect) {
+       setPointerPos({
+         x: e.clientX - containerRect.left,
+         y: e.clientY - containerRect.top
+       });
     }
   };
 
-  const handleNodeUp = (idx: number, side: 'left' | 'right') => {
-    if (activeWire && side === 'right') {
-      const startColor = activeWire.color;
-      const endColor = rightNodes[idx];
-      
-      // if colors match, make connection
-      if (startColor === endColor) {
-        const newConns = { ...connections, [activeWire.startIdx]: idx };
-        setConnections(newConns);
-        vibrate(VIBRATION.tap);
-        
-        if (Object.keys(newConns).length === COLORS.length) {
-          setTimeout(onComplete, 500);
+  const handlePointerMove = (e: React.PointerEvent) => {
+    if (activeWire && containerRef.current) {
+      // Prevent scrolling while drawing wires
+      e.preventDefault();
+      const containerRect = containerRef.current.getBoundingClientRect();
+      setPointerPos({
+        x: Math.max(0, Math.min(containerRect.width, e.clientX - containerRect.left)),
+        y: Math.max(0, Math.min(containerRect.height, e.clientY - containerRect.top)),
+      });
+    }
+  };
+
+  const handlePointerUp = (e: React.PointerEvent) => {
+    if (phase !== 'connect' || !activeWire) return;
+    
+    let droppedIdx = -1;
+    rightRefs.current.forEach((el, idx) => {
+        if (!el) return;
+        const rect = el.getBoundingClientRect();
+        // generous hit area
+        if (e.clientX >= rect.left - 30 && e.clientX <= rect.right + 30 &&
+            e.clientY >= rect.top - 30 && e.clientY <= rect.bottom + 30) {
+             droppedIdx = idx;
         }
-      } else {
-        vibrate(VIBRATION.error);
-      }
+    });
+    
+    if (droppedIdx !== -1) {
+        const startColor = activeWire.color;
+        const endColor = rightNodes[droppedIdx];
+        if (startColor === endColor) {
+             const newConns = { ...connections, [activeWire.startIdx]: droppedIdx };
+             setConnections(newConns);
+             vibrate(VIBRATION.tap);
+             if (Object.keys(newConns).length === COLORS.length) {
+                 setTimeout(onComplete, 500);
+             }
+        } else {
+             vibrate(VIBRATION.error);
+        }
     }
     setActiveWire(null);
+    setPointerPos(null);
   };
 
   return (
-    <div className="w-full flex justify-between items-center bg-zinc-900 border-2 border-zinc-700 rounded-xl p-8 relative touch-none shadow-inner min-h-[300px]">
-      <div className="flex flex-col gap-10 z-10 w-full max-w-[50px]">
-        {leftNodes.map((color, i) => (
-          <div key={`L${i}`} className="flex items-center">
-            <div 
-              onPointerDown={(e) => { e.preventDefault(); handleNodeDown(i, 'left'); }}
-              className="w-8 h-8 rounded-full border-4 border-zinc-400 cursor-pointer shadow-lg active:scale-95" 
-              style={{ backgroundColor: color }} 
-            />
-            {connections[i] !== undefined && (
-               <div className="absolute left-[82px] right-[82px] h-3 pointer-events-none" style={{
-                 backgroundColor: color,
-                 opacity: 0.8,
-                 top: `${48 + i * 72}px`,
-                 transformOrigin: 'left center',
-                 // Calculate angle and width
-                 width: 'calc(100% - 164px)', 
-                 // Simple hack for straight lines for now, or just indicate it's connected
-               }}>
-                 <div className="w-full h-full text-center text-[10px] text-white/50 bg-black/20 flex items-center justify-center tracking-widest font-bold">CONNECTED</div>
-               </div>
-            )}
-            {connections[i] === undefined && activeWire?.startIdx === i && (
-               <div className="absolute left-[82px] w-[50%] h-3 pointer-events-none animate-pulse" style={{ backgroundColor: color, top: `${48 + i * 72}px` }}></div>
-            )}
-          </div>
-        ))}
-      </div>
-      
-      <div className="flex flex-col gap-10 z-10 w-full max-w-[50px] items-end">
-        {rightNodes.map((color, i) => {
-          const isConnected = Object.values(connections).includes(i);
-          return (
-            <div key={`R${i}`} className="flex items-center">
+    <div className="w-full max-w-md mx-auto">
+      {phase === 'memorize' && (
+        <div className="mb-4 text-center animate-pulse">
+           <p className="text-zinc-400 text-sm font-bold tracking-widest uppercase">Memorize locations</p>
+           <p className="text-3xl font-bold text-red-500">{timeLeft}s</p>
+        </div>
+      )}
+      {phase === 'connect' && (
+        <div className="mb-4 text-center">
+           <p className="text-zinc-400 text-sm font-bold tracking-widest uppercase">Match the connections</p>
+           <p className="text-3xl font-bold text-green-500">CONNECT</p>
+        </div>
+      )}
+
+      <div 
+        ref={containerRef}
+        className={`w-full flex justify-between items-center bg-zinc-900 border-2 ${phase === 'memorize' ? 'border-red-500/50 shadow-[0_0_20px_rgba(239,68,68,0.2)]' : 'border-zinc-700 shadow-inner'} rounded-xl p-8 relative touch-none min-h-[300px] select-none`}
+        onPointerMove={handlePointerMove}
+        onPointerUp={handlePointerUp}
+        onPointerLeave={handlePointerUp}
+      >
+        <div className="flex flex-col gap-10 z-10 w-full max-w-[50px]">
+          {leftNodes.map((color, i) => (
+            <div key={`L${i}`} className="flex items-center h-8">
               <div 
-                onPointerUp={() => handleNodeUp(i, 'right')}
-                className={`w-8 h-8 rounded-full border-4 border-zinc-400 ${isConnected ? 'opacity-50' : 'cursor-pointer hover:border-white'}`} 
+                ref={el => leftRefs.current[i] = el}
+                onPointerDown={(e) => handlePointerDownLeft(i, e)}
+                className={`w-8 h-8 rounded-full border-4 border-zinc-400 shadow-lg ${phase === 'connect' ? 'cursor-pointer active:scale-95' : ''}`} 
                 style={{ backgroundColor: color }} 
               />
             </div>
-          );
-        })}
-      </div>
-      
-      {/* Central panel indicator */}
-      <div className="absolute inset-x-20 top-1/2 -translate-y-1/2 flex flex-col items-center pointer-events-none opacity-20">
-         <div className="text-4xl font-bold tracking-[0.5em] text-zinc-500 transform rotate-90 sm:rotate-0">ELECTRICAL</div>
+          ))}
+        </div>
+        
+        <div className="flex flex-col gap-10 z-10 w-full max-w-[50px] items-end">
+          {rightNodes.map((color, i) => {
+            const isConnected = Object.values(connections).includes(i);
+            // Hide colors on the right side if we are in connect phase! (unless connected successfully)
+            const displayColor = phase === 'memorize' ? color : (isConnected ? color : '#3f3f46');
+            return (
+              <div key={`R${i}`} className="flex items-center h-8">
+                <div 
+                  ref={el => rightRefs.current[i] = el}
+                  className={`w-8 h-8 rounded-full border-4 border-zinc-400 ${isConnected ? 'opacity-50' : 'hover:border-zinc-300 transition-colors'}`} 
+                  style={{ backgroundColor: displayColor }} 
+                />
+              </div>
+            );
+          })}
+        </div>
+
+        {/* SVG Drawing Layer for the wires */}
+        <svg className="absolute inset-0 w-full h-full pointer-events-none z-0">
+           {/* Established connections */}
+           {Object.entries(connections).map(([startIdx, endIdx]) => {
+              const s = getRelativePos(leftRefs.current[parseInt(startIdx)]);
+              const e = getRelativePos(rightRefs.current[endIdx]);
+              const color = leftNodes[parseInt(startIdx)];
+              return (
+                 <line 
+                   key={`conn-${startIdx}`}
+                   x1={s.x} y1={s.y} 
+                   x2={e.x} y2={e.y} 
+                   stroke={color} 
+                   strokeWidth={12} 
+                   strokeLinecap="round"
+                   opacity={0.8}
+                 />
+              );
+           })}
+           
+           {/* Active drawing wire */}
+           {activeWire && pointerPos && (
+              <line 
+                x1={getRelativePos(leftRefs.current[activeWire.startIdx]).x} 
+                y1={getRelativePos(leftRefs.current[activeWire.startIdx]).y} 
+                x2={pointerPos.x} 
+                y2={pointerPos.y} 
+                stroke={activeWire.color} 
+                strokeWidth={12} 
+                strokeLinecap="round"
+                opacity={0.9}
+              />
+           )}
+        </svg>
       </div>
     </div>
   );
