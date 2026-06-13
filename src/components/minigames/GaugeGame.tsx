@@ -5,11 +5,11 @@ export function GaugeGame({ onComplete }: { onComplete: () => void }) {
   const [position, setPosition] = useState(0);
   const [direction, setDirection] = useState(1);
   const [successCount, setSuccessCount] = useState(0);
-  const speed = useRef(2); 
+  const speed = useRef(1.5); 
   const targetRequired = 3;
   const gameLoop = useRef<number | null>(null);
   
-  const targetZone = { start: 40, end: 60 }; // %
+  const targetZone = { start: 30, end: 70 }; // %
 
   useEffect(() => {
     let lastTime = performance.now();
@@ -49,14 +49,15 @@ export function GaugeGame({ onComplete }: { onComplete: () => void }) {
            setTimeout(onComplete, 500);
         } else {
            // increase speed
-           speed.current += 1.5;
+           speed.current += 0.5;
         }
         return next;
       });
     } else {
       // Missed
       vibrate(VIBRATION.error);
-      setSuccessCount((prev) => Math.max(0, prev - 1));
+      setSuccessCount(0);
+      speed.current = 1.5;
     }
   };
 
