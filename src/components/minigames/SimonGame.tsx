@@ -1,38 +1,40 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { vibrate, VIBRATION } from '../../utils/vibration';
 
-const COLORS = [
-  { id: 0, color: 'bg-red-500', active: 'bg-red-400 shadow-[0_0_30px_rgba(239,68,68,0.8)]' },
-  { id: 1, color: 'bg-blue-500', active: 'bg-blue-400 shadow-[0_0_30px_rgba(59,130,246,0.8)]' },
-  { id: 2, color: 'bg-yellow-500', active: 'bg-yellow-400 shadow-[0_0_30px_rgba(234,179,8,0.8)]' },
-  { id: 3, color: 'bg-green-500', active: 'bg-green-400 shadow-[0_0_30px_rgba(34,197,94,0.8)]' },
-];
+const TILES = Array.from({ length: 9 }).map((_, i) => ({
+  id: i,
+  color: 'bg-zinc-800 border-2 border-zinc-700',
+  active: 'bg-cyan-400 border-cyan-200 shadow-[0_0_30px_rgba(34,211,238,0.8)]',
+  success: 'bg-green-500 border-green-300 shadow-[0_0_30px_rgba(34,197,94,0.8)]',
+  error: 'bg-red-500 border-red-300 shadow-[0_0_30px_rgba(239,68,68,0.8)]',
+}));
 
 export function SimonGame({ onComplete }: { onComplete: () => void }) {
   const [sequence, setSequence] = useState<number[]>([]);
   const [playerSequence, setPlayerSequence] = useState<number[]>([]);
   const [activeButton, setActiveButton] = useState<number | null>(null);
   const [isPlaying, setIsPlaying] = useState(false);
-  const [gameStatus, setGameStatus] = useState<'waiting' | 'playing' | 'failed'>('waiting');
+  const [gameStatus, setGameStatus] = useState<'waiting' | 'playing' | 'failed' | 'success'>('waiting');
+  const [round, setRound] = useState(1);
   
-  const nextTarget = 4; // Length of sequence to win
+  const targetRounds = 3;
 
   useEffect(() => {
-    // Start first sequence
-    startNextRound([]);
+    startNextRound(1);
   }, []);
 
-  const startNextRound = (currentSeq: number[]) => {
-    const newSeq = [...currentSeq, Math.floor(Math.random() * 4)];
+  const startNextRound = (currentRound: number) => {
+    const seqLength = 3 + currentRound; // Round 1 -> 4, 2 -> 5, 3 -> 6
+    const newSeq = Array.from({ length: seqLength }).map(() => Math.floor(Math.random() * 9));
     setSequence(newSeq);
     setPlayerSequence([]);
     setGameStatus('playing');
+    setRound(currentRound);
     playSequence(newSeq);
   };
 
   const playSequence = async (seq: number[]) => {
     setIsPlaying(true);
-    // Wait before playing
     await new Promise(r => setTimeout(r, 600));
     
     for (let i = 0; i < seq.length; i++) {
@@ -55,47 +57,51 @@ export function SimonGame({ onComplete }: { onComplete: () => void }) {
     const newPlayerSeq = [...playerSequence, id];
     setPlayerSequence(newPlayerSeq);
     
-    // Check if correct
     const isCorrect = newPlayerSeq.every((val, index) => val === sequence[index]);
     
     if (!isCorrect) {
       setGameStatus('failed');
       vibrate(VIBRATION.error);
       setTimeout(() => {
-         startNextRound([]); // Restart from scratch
+         startNextRound(1); // Restart from scratch
       }, 1000);
       return;
     }
     
-    // If finished current sequence
     if (newPlayerSeq.length === sequence.length) {
-      if (sequence.length >= nextTarget) {
-        setTimeout(onComplete, 500);
+      setGameStatus('success');
+      vibrate(VIBRATION.success);
+      if (round >= targetRounds) {
+        setTimeout(onComplete, 1000);
       } else {
-        setTimeout(() => startNextRound(sequence), 800);
+        setTimeout(() => startNextRound(round + 1), 1000);
       }
     }
   };
 
   return (
     <div className="w-full flex justify-center items-center p-4">
-      <div className="bg-zinc-900 border-4 border-zinc-800 rounded-full p-6 sm:p-10 relative">
-         <div className="grid grid-cols-2 gap-4 sm:gap-6">
-           {COLORS.map((c) => (
+      <div className="bg-zinc-900 border-4 border-zinc-800 rounded-2xl p-6 sm:p-10 relative">
+         <div className="grid grid-cols-3 gap-3 sm:gap-4">
+           {TILES.map((c) => (
              <div 
                key={c.id}
-               className={`w-20 h-20 sm:w-28 sm:h-28 rounded-2xl cursor-pointer transition-all duration-100 ${activeButton === c.id ? c.active : c.color} ${isPlaying ? 'opacity-80 pointer-events-none' : 'hover:scale-105 active:scale-95'}`}
+               className={`w-16 h-16 sm:w-20 sm:h-20 rounded-xl cursor-pointer transition-all duration-100 ${gameStatus === 'success' ? c.success : gameStatus === 'failed' ? c.error : activeButton === c.id ? c.active : c.color} ${isPlaying || gameStatus !== 'playing' ? 'opacity-80 pointer-events-none' : 'hover:bg-zinc-700 active:scale-95'}`}
                onPointerDown={() => handlePress(c.id)}
              />
            ))}
          </div>
          
-         {/* Center display */}
-         <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-16 h-16 sm:w-20 sm:h-20 bg-zinc-950 rounded-full border-4 border-zinc-800 flex items-center justify-center">
+         {/* Center display has been removed since 3x3 doesn't leave an empty center, moving info to top/bottom */}
+         <div className="absolute -bottom-12 left-0 right-0 flex justify-center">
             {gameStatus === 'failed' ? (
-               <span className="text-red-500 font-bold text-xl">ERR</span>
+               <span className="text-red-500 font-bold tracking-widest text-lg animate-pulse">SEQUENCE FAILED</span>
+            ) : gameStatus === 'success' ? (
+               <span className="text-green-500 font-bold tracking-widest text-lg animate-pulse">{round >= targetRounds ? 'SYSTEM UNLOCKED' : 'STAGE CLEARED'}</span>
             ) : (
-               <span className="text-zinc-500 font-mono font-bold">{sequence.length} / {nextTarget}</span>
+               <span className="text-zinc-400 font-mono font-bold tracking-widest bg-zinc-900 px-4 py-2 rounded-full border border-zinc-800">
+                 STAGE {round} / {targetRounds}
+               </span>
             )}
          </div>
       </div>
