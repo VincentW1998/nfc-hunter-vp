@@ -41,8 +41,7 @@ export function OxygenGame({ onComplete }: { onComplete: () => void }) {
                  min="0" max="100" 
                  value={leftValue} 
                  onChange={(e) => { setLeftValue(parseInt(e.target.value)); vibrate(VIBRATION.tap); }}
-                 className="absolute inset-0 w-[400%] h-full opacity-0 origin-bottom-left -rotate-90 translate-y-full cursor-ns-resize"
-                 // Rotation is tricky with inputs, using a vertical slider css is better if supported
+                 className="absolute inset-0 w-full h-full opacity-0 cursor-ns-resize"
                  style={{ WebkitAppearance: 'slider-vertical' } as any}
                />
             </div>
