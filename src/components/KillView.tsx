@@ -61,6 +61,13 @@ export function KillView({ user }: { user: any }) {
             return;
         }
 
+        // Cannot kill another killer
+        if (target.role === 'killer') {
+            toast.error("You cannot eliminate another killer.");
+            navigate(`/game/${gameId}`);
+            return;
+        }
+
         const now = Date.now();
         if (me.lastKillTime && now - me.lastKillTime < 120000) {
             const left = Math.ceil((120000 - (now - me.lastKillTime)) / 1000);

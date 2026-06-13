@@ -195,8 +195,8 @@ export function AdminPanel({ user }: { user: any }) {
       
       if (playerDocs.length > 0) {
         const shuffled = [...playerDocs].sort(() => 0.5 - Math.random());
-        // 1 killer for every 4 players, minimum 1
-        const numKillers = Math.max(1, Math.floor(shuffled.length / 4));
+        // Use killerCount from game settings or default to 1, but no more than players - 1
+        const numKillers = Math.max(1, Math.min(shuffled.length - 1, gameSnap.data().killerCount || 1));
         
         for (let i = 0; i < shuffled.length; i++) {
           const isKiller = i < numKillers;
@@ -525,9 +525,43 @@ export function AdminPanel({ user }: { user: any }) {
 
       <div className="flex flex-col gap-4 relative z-10 shadow-2xl">
         {game?.status === "lobby" ? (
-          <button onClick={startGame} className="flex font-bold items-center justify-center gap-2 w-full py-4 bg-blue-500 hover:bg-blue-600 text-white rounded-full shadow-lg transition-transform hover:scale-[1.02] cursor-pointer uppercase tracking-widest">
-            <Play size={20} /> INITIATE DEPLOYMENT
-          </button>
+          <>
+            <div className="bg-zinc-900 border border-zinc-800 p-6 rounded-[16px] mb-2">
+              <h2 className="text-sm text-zinc-400 mb-4 uppercase font-bold tracking-widest">Game Settings</h2>
+              
+              <div className="flex flex-col gap-5">
+                <div>
+                  <label className="text-[10px] text-zinc-500 font-bold tracking-widest uppercase block mb-1">Number of Killers</label>
+                  <input
+                    type="number"
+                    value={game.killerCount || 1}
+                    min="1"
+                    max={Math.max(1, players.length - 1)}
+                    onChange={(e) => updateDoc(doc(db, "games", gameId!), { killerCount: parseInt(e.target.value, 10) || 1 })}
+                    className="w-full bg-zinc-950 border border-zinc-800 text-zinc-200 text-sm font-bold tracking-wider rounded-lg px-4 py-3 focus:outline-none focus:border-red-500 transition-colors"
+                  />
+                  <p className="text-[10px] text-zinc-600 mt-1 uppercase font-bold tracking-widest">Adjusts based on player count when deployed.</p>
+                </div>
+                
+                <div className="flex items-center gap-3 bg-zinc-950 border border-zinc-800 p-4 rounded-xl">
+                  <input
+                    type="checkbox"
+                    id="killersKnowEachOther"
+                    checked={game.killersKnowEachOther || false}
+                    onChange={(e) => updateDoc(doc(db, "games", gameId!), { killersKnowEachOther: e.target.checked })}
+                    className="w-5 h-5 accent-red-500 cursor-pointer"
+                  />
+                  <label htmlFor="killersKnowEachOther" className="text-sm font-bold tracking-wider text-zinc-200 cursor-pointer flex-1">
+                    Killers know each other
+                  </label>
+                </div>
+              </div>
+            </div>
+            
+            <button onClick={startGame} className="flex font-bold items-center justify-center gap-2 w-full py-4 bg-blue-500 hover:bg-blue-600 text-white rounded-full shadow-lg transition-transform hover:scale-[1.02] cursor-pointer uppercase tracking-widest">
+              <Play size={20} /> INITIATE DEPLOYMENT
+            </button>
+          </>
         ) : (
           <div className="flex flex-col gap-4">
             <div className="bg-green-500/20 text-green-500 border border-green-500/30 p-4 rounded-full text-center font-bold tracking-widest uppercase text-sm">

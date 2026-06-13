@@ -15,6 +15,8 @@ export interface Game {
   lastEmergencyTime?: number;
   round?: number;
   completedMissions?: string[];
+  killerCount?: number;
+  killersKnowEachOther?: boolean;
 }
 
 export interface Player {

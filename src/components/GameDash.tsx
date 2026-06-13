@@ -148,6 +148,30 @@ export function GameDash({ user }: { user: any }) {
           </p>
         </div>
 
+        {me.role === 'killer' && game.killersKnowEachOther && (
+          <div className="bg-red-950/30 border border-red-500/30 rounded-[16px] p-6 mb-8 relative shadow-2xl">
+            <h3 className="text-sm text-red-500 font-bold tracking-widest uppercase mb-4 text-center border-b border-red-500/20 pb-2">Assassination Network</h3>
+            <div className="flex flex-col gap-3">
+              {players.filter(p => p.role === 'killer' && p.id !== me.id).length === 0 ? (
+                 <p className="text-xs text-red-400 text-center uppercase tracking-widest">You are the lone operative.</p>
+              ) : (
+                players.filter(p => p.role === 'killer' && p.id !== me.id).map(p => (
+                  <div key={p.id} className="flex items-center justify-between p-3 bg-red-950/50 rounded-xl border border-red-500/20">
+                    <span className={`text-sm font-bold uppercase tracking-wider ${p.status === 'alive' ? 'text-red-400' : 'text-red-900 line-through'}`}>
+                      {p.name}
+                    </span>
+                    {p.status === 'alive' ? (
+                      <span className="text-[10px] text-red-500 font-bold px-2 py-1 bg-red-500/10 rounded uppercase tracking-widest">Active</span>
+                    ) : (
+                      <span className="text-[10px] text-red-900 font-bold px-2 py-1 bg-red-900/10 rounded uppercase tracking-widest">Eliminated</span>
+                    )}
+                  </div>
+                ))
+              )}
+            </div>
+          </div>
+        )}
+
         {me.role === 'crewmate' && Object.keys(missions).length > 0 && (
           <div className="bg-zinc-900 border border-zinc-800 rounded-[16px] p-6 mb-8 relative shadow-2xl">
             <h3 className="text-sm text-zinc-400 font-bold tracking-widest uppercase mb-4 text-center border-b border-zinc-800 pb-2">Global Mission Status</h3>
